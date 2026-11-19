@@ -1,0 +1,106 @@
+{
+ "version": "2.0",
+ "class": "dataset",
+ "label": "Smoking of tobacco products by sex, age and educational attainment level",
+ "source": "ESTAT",
+ "updated": "2024-01-03T23:00:00+0100",
+ "value": {
+  "0": 78.3,
+  "1": 71.7,
+  "3": 76.0,
+  "4": 15.9
+ },
+ "status": {
+  "2": ":"
+ },
+ "id": [
+  "freq",
+  "unit",
+  "smoking",
+  "sex",
+  "geo",
+  "time"
+ ],
+ "size": [
+  1,
+  1,
+  2,
+  1,
+  2,
+  2
+ ],
+ "dimension": {
+  "freq": {
+   "label": "Time frequency",
+   "category": {
+    "index": {
+     "A": 0
+    },
+    "label": {
+     "A": "Annual"
+    }
+   }
+  },
+  "unit": {
+   "label": "Unit",
+   "category": {
+    "index": {
+     "PC": 0
+    },
+    "label": {
+     "PC": "Percentage"
+    }
+   }
+  },
+  "smoking": {
+   "label": "Smoking",
+   "category": {
+    "index": {
+     "NSM": 0,
+     "SM_DAY": 1
+    },
+    "label": {
+     "NSM": "Non-smoker",
+     "SM_DAY": "Daily smoker"
+    }
+   }
+  },
+  "sex": {
+   "label": "Sex",
+   "category": {
+    "index": {
+     "T": 0
+    },
+    "label": {
+     "T": "Total"
+    }
+   }
+  },
+  "geo": {
+   "label": "Geo",
+   "category": {
+    "index": {
+     "DE": 0,
+     "EL": 1
+    },
+    "label": {
+     "DE": "Germany",
+     "EL": "Greece"
+    }
+   }
+  },
+  "time": {
+   "label": "Time",
+   "category": {
+    "index": {
+     "2014": 0,
+     "2019": 1
+    },
+    "label": {
+     "2014": "2014",
+     "2019": "2019"
+    }
+   }
+  }
+ }
+}

@@ -1,0 +1,10 @@
+{
+ "@odata.context": "x",
+ "value": [
+  {
+   "IndicatorCode": "R_Group",
+   "IndicatorName": "Raising taxes on tobacco",
+   "Language": "EN"
+  }
+ ]
+}

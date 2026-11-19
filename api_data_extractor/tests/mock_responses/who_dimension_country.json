@@ -1,0 +1,14 @@
+{
+ "value": [
+  {
+   "Code": "FRA",
+   "Title": "France",
+   "Dimension": "COUNTRY"
+  },
+  {
+   "Code": "DEU",
+   "Title": "Germany",
+   "Dimension": "COUNTRY"
+  }
+ ]
+}

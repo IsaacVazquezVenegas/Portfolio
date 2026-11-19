@@ -1,0 +1,10 @@
+{
+ "@odata.context": "x",
+ "value": [
+  {
+   "IndicatorCode": "M_Est_tob_curr_std",
+   "IndicatorName": "Estimate of current tobacco use prevalence (%) (age-standardized)",
+   "Language": "EN"
+  }
+ ]
+}

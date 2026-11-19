@@ -1,0 +1,201 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "WHO_MPOWER",
+  "created": "2026-11-19",
+  "prepared_by": "LLM (Claude, following LLM_DATA_EXTRACTION_PROTOCOL.md) for researcher review",
+  "research": {
+    "objective": "Build a country-year panel of WHO MPOWER tobacco control policy achievement levels, with tobacco use prevalence as context, as the initial test case of the extraction framework.",
+    "subject": "Tobacco control policy (WHO FCTC MPOWER measures)",
+    "variables": [
+      "Monitor (M) policy level",
+      "Protect (P) policy level",
+      "Offer (O) policy level",
+      "Warn - health warnings (W) policy level",
+      "Warn - mass media campaigns (W-MM) policy level",
+      "Enforce (E) policy level",
+      "Raise taxes (R) policy level",
+      "Current tobacco use prevalence, age-standardised"
+    ],
+    "geographic_coverage": "All countries reported by WHO (195 for MPOWER indicators)",
+    "time_period": "2007-2022",
+    "frequency": "Biennial for MPOWER (2007, 2008, then every two years); prevalence estimates for selected years",
+    "aggregation_level": "Country",
+    "output_formats": ["csv", "xlsx", "json"],
+    "analytical_applications": [
+      "Descriptive analysis of policy adoption over time",
+      "Panel analysis of policy levels and tobacco use prevalence"
+    ],
+    "stated_by_user": [
+      "Initial test case: WHO MPOWER",
+      "Outputs: CSV, Excel, raw JSON, data dictionary, log, manifest"
+    ],
+    "assumptions": [
+      "All countries and the full MPOWER period available in the GHO API (2007-2022) are wanted",
+      "Age-standardised current tobacco use prevalence (both sexes, male, female) is a useful contextual variable",
+      "Long format is the primary dataset; a wide country-year panel is also useful"
+    ]
+  },
+  "sources": [
+    {
+      "id": "who_gho",
+      "provider": "World Health Organization",
+      "api_name": "Global Health Observatory OData API",
+      "api_type": "odata",
+      "documentation_url": "https://www.who.int/data/gho/info/gho-odata-api",
+      "base_url": "https://ghoapi.azureedge.net/api",
+      "authentication": "none (public API)",
+      "rate_limits": "Not documented; requests are spaced 0.5 s apart",
+      "metadata_available": "Indicator names (Indicator endpoint); dimension labels (DIMENSION/{type}/DimensionValues). No units or definitions in the API.",
+      "update_frequency": "MPOWER: with each WHO Report on the Global Tobacco Epidemic (biennial)",
+      "priority": "official_api",
+      "proposed_connector": "who_gho"
+    }
+  ],
+  "indicator_mapping": [
+    {
+      "research_variable": "Monitor (M) policy level",
+      "source": "who_gho",
+      "indicator_code": "M_Group",
+      "official_name": "Monitoring tobacco use and prevention policies",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007, 2008, 2010, 2012, 2014, 2016, 2018, 2020, 2022",
+      "category": "M",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/Indicator?$filter=endswith(IndicatorCode,'_Group')", "performed_on": "2026-11-19", "result": "M_Group, P_Group, O_Group, W_Group, W-MM_Group, E_Group, R_Group listed with official names"},
+        {"query": "https://ghoapi.azureedge.net/api/M_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations, 195 countries x 9 years; values '1'-'4' as text, NumericValue null"}
+      ]
+    },
+    {
+      "research_variable": "Protect (P) policy level",
+      "source": "who_gho",
+      "indicator_code": "P_Group",
+      "official_name": "Protecting people from tobacco smoke",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "P",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/P_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations, 195 countries; values '2'-'5' as text"}
+      ]
+    },
+    {
+      "research_variable": "Offer (O) policy level",
+      "source": "who_gho",
+      "indicator_code": "O_Group",
+      "official_name": "Offering help to quit tobacco use",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "O",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/O_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations, 195 countries; values '1'-'5' as text"}
+      ]
+    },
+    {
+      "research_variable": "Warn - health warnings (W) policy level",
+      "source": "who_gho",
+      "indicator_code": "W_Group",
+      "official_name": "Warning about the dangers of tobacco",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "W",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/W_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations, 195 countries; values '2'-'5' as text"}
+      ]
+    },
+    {
+      "research_variable": "Warn - mass media campaigns (W-MM) policy level",
+      "source": "who_gho",
+      "indicator_code": "W-MM_Group",
+      "official_name": "Anti-tobacco mass media campaigns",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "W",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/W-MM_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations; values '1'-'5' and 'Not applicable' (390 observations)"}
+      ]
+    },
+    {
+      "research_variable": "Enforce (E) policy level",
+      "source": "who_gho",
+      "indicator_code": "E_Group",
+      "official_name": "Enforcing bans on tobacco advertising, promotion and sponsorship",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "E",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/E_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations, 195 countries; values '2'-'5' as text"}
+      ]
+    },
+    {
+      "research_variable": "Raise taxes (R) policy level",
+      "source": "who_gho",
+      "indicator_code": "R_Group",
+      "official_name": "Raising taxes on tobacco",
+      "unit": "Ordinal group",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "195 countries",
+      "time_coverage": "2007-2022 (9 report years)",
+      "category": "R",
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/R_Group?$filter=SpatialDimType eq 'COUNTRY'", "performed_on": "2026-11-19", "result": "1755 observations; values '1'-'5' and 'Not applicable' (207 observations, e.g. FRA 2007)"}
+      ]
+    },
+    {
+      "research_variable": "Current tobacco use prevalence, age-standardised",
+      "source": "who_gho",
+      "indicator_code": "M_Est_tob_curr_std",
+      "official_name": "Estimate of current tobacco use prevalence (%) (age-standardized)",
+      "definition": "Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised to the WHO Standard Population.",
+      "unit": "Percent",
+      "measurement_scale": "ratio",
+      "population_coverage": "Population aged 15 years and over, by sex (SEX_BTSX, SEX_MLE, SEX_FMLE)",
+      "geographic_coverage": "167 countries",
+      "time_coverage": "2000, 2005, 2007, 2010, 2015, 2020, 2022-2025 and 2030 (projection)",
+      "aggregation_methodology": "WHO global tobacco trends model; uncertainty interval in Low/High",
+      "category": "Context",
+      "alternatives_considered": [
+        "M_Est_smk_curr_std (tobacco smoking only, excludes smokeless tobacco)",
+        "M_Est_tob_curr (crude, not age-standardised; less comparable across countries)"
+      ],
+      "verification_status": "confirmed",
+      "evidence": [
+        {"query": "https://ghoapi.azureedge.net/api/M_Est_tob_curr_std?$filter=SpatialDim eq 'FRA' and TimeDim eq 2020", "performed_on": "2026-11-19", "result": "NumericValue 30.9 (female) and 36.6 (male) with Low/High bounds; comment notes smoking estimates substituted where tobacco use estimates are unavailable"}
+      ]
+    }
+  ],
+  "expected_data_structure": "Long format: one row per indicator x country x year (x sex for prevalence). MPOWER levels are text categories in value_text; prevalence is numeric in value with low/high. Optional wide country-year panel.",
+  "known_limitations": [
+    "MPOWER group levels are ordinal categories delivered as text ('1'-'5', 'Not applicable'); they are not converted to numeric scores. The meaning of each level differs by measure and must be taken from the WHO report technical notes.",
+    "MPOWER data exist only for report years (2007, 2008, 2010, ... 2022); intermediate years are absent by design and are not interpolated.",
+    "The GHO API provides neither units nor definitions; these come from the configuration and WHO documentation.",
+    "Prevalence series include modelled estimates and projections (2023-2030); the 2007-2022 window excludes projections beyond 2022.",
+    "For some countries, tobacco smoking estimates substitute for tobacco use estimates (see the comments column)."
+  ],
+  "outstanding_decisions": [
+    "Confirm that all 195 countries and the 2007-2022 period are wanted.",
+    "Confirm that age-standardised current tobacco use prevalence by sex should be included as a contextual variable.",
+    "Confirm the interpretation of each MPOWER group level against the WHO report technical notes before analysis."
+  ],
+  "approval": {
+    "status": "draft"
+  }
+}

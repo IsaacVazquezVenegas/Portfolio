@@ -1,0 +1,315 @@
+iso3,iso2,name,is_aggregate,origin
+ABW,AW,Aruba,false,world_bank;who
+AFE,ZH,Africa Eastern and Southern,true,world_bank
+AFG,AF,Afghanistan,false,world_bank;who
+AFR,A9,Africa,true,world_bank
+AFW,ZI,Africa Western and Central,true,world_bank
+AGO,AO,Angola,false,world_bank;who
+AIA,AI,Anguilla,false,who
+ALB,AL,Albania,false,world_bank;who
+AND,AD,Andorra,false,world_bank;who
+ARB,1A,Arab World,true,world_bank
+ARE,AE,United Arab Emirates,false,world_bank;who
+ARG,AR,Argentina,false,world_bank;who
+ARM,AM,Armenia,false,world_bank;who
+ASM,AS,American Samoa,false,world_bank;who
+ATG,AG,Antigua and Barbuda,false,world_bank;who
+AUS,AU,Australia,false,world_bank;who
+AUT,AT,Austria,false,world_bank;who
+AZE,AZ,Azerbaijan,false,world_bank;who
+BDI,BI,Burundi,false,world_bank;who
+BEA,B4,East Asia & Pacific (IBRD-only countries),true,world_bank
+BEC,B7,Europe & Central Asia (IBRD-only countries),true,world_bank
+BEL,BE,Belgium,false,world_bank;who
+BEN,BJ,Benin,false,world_bank;who
+BES,BQ,"Bonaire, Saint Eustatius and Saba",false,who
+BFA,BF,Burkina Faso,false,world_bank;who
+BGD,BD,Bangladesh,false,world_bank;who
+BGR,BG,Bulgaria,false,world_bank;who
+BHI,B1,IBRD countries classified as high income,true,world_bank
+BHR,BH,Bahrain,false,world_bank;who
+BHS,BS,"Bahamas, The",false,world_bank;who
+BIH,BA,Bosnia and Herzegovina,false,world_bank;who
+BLA,B2,Latin America & the Caribbean (IBRD-only countries),true,world_bank
+BLR,BY,Belarus,false,world_bank;who
+BLZ,BZ,Belize,false,world_bank;who
+BMN,B3,"Middle East, North Africa, Afghanistan & Pakistan (IBRD only)",true,world_bank
+BMU,BM,Bermuda,false,world_bank;who
+BOL,BO,Bolivia,false,world_bank;who
+BRA,BR,Brazil,false,world_bank;who
+BRB,BB,Barbados,false,world_bank;who
+BRN,BN,Brunei Darussalam,false,world_bank;who
+BSS,B6,Sub-Saharan Africa (IBRD-only countries),true,world_bank
+BTN,BT,Bhutan,false,world_bank;who
+BWA,BW,Botswana,false,world_bank;who
+CAA,C9,Sub-Saharan Africa (IFC classification),true,world_bank
+CAF,CF,Central African Republic,false,world_bank;who
+CAN,CA,Canada,false,world_bank;who
+CEA,C4,East Asia and the Pacific (IFC classification),true,world_bank
+CEB,B8,Central Europe and the Baltics,true,world_bank
+CEU,C5,Europe and Central Asia (IFC classification),true,world_bank
+CHE,CH,Switzerland,false,world_bank;who
+CHI,JG,Channel Islands,false,world_bank;who
+CHL,CL,Chile,false,world_bank;who
+CHN,CN,China,false,world_bank;who
+CIV,CI,Cote d'Ivoire,false,world_bank;who
+CLA,C6,Latin America and the Caribbean (IFC classification),true,world_bank
+CME,C7,Middle East and North Africa (IFC classification),true,world_bank
+CMR,CM,Cameroon,false,world_bank;who
+COD,CD,"Congo, Dem. Rep.",false,world_bank;who
+COG,CG,"Congo, Rep.",false,world_bank;who
+COK,CK,Cook Islands,false,who
+COL,CO,Colombia,false,world_bank;who
+COM,KM,Comoros,false,world_bank;who
+CPV,CV,Cabo Verde,false,world_bank;who
+CRI,CR,Costa Rica,false,world_bank;who
+CSA,C8,South Asia (IFC classification),true,world_bank
+CSS,S3,Caribbean small states,true,world_bank
+CUB,CU,Cuba,false,world_bank;who
+CUW,CW,Curacao,false,world_bank;who
+CYM,KY,Cayman Islands,false,world_bank;who
+CYP,CY,Cyprus,false,world_bank;who
+CZE,CZ,Czechia,false,world_bank;who
+DEA,D4,East Asia & Pacific (IDA-eligible countries),true,world_bank
+DEC,D7,Europe & Central Asia (IDA-eligible countries),true,world_bank
+DEU,DE,Germany,false,world_bank;who
+DJI,DJ,Djibouti,false,world_bank;who
+DLA,D2,Latin America & the Caribbean (IDA-eligible countries),true,world_bank
+DMA,DM,Dominica,false,world_bank;who
+DMN,D3,"Middle East, North Africa, Afghanistan & Pakistan (IDA total)",true,world_bank
+DNK,DK,Denmark,false,world_bank;who
+DNS,N6,IDA countries in Sub-Saharan Africa not classified as fragile situations,true,world_bank
+DOM,DO,Dominican Republic,false,world_bank;who
+DSA,D5,South Asia (IDA-eligible countries),true,world_bank
+DSF,F6,IDA countries in Sub-Saharan Africa classified as fragile situations,true,world_bank
+DSS,D6,Sub-Saharan Africa (IDA-eligible countries),true,world_bank
+DZA,DZ,Algeria,false,world_bank;who
+EAP,4E,East Asia & Pacific (excluding high income),true,world_bank
+EAR,V2,Early-demographic dividend,true,world_bank
+EAS,Z4,East Asia & Pacific,true,world_bank
+ECA,7E,Europe & Central Asia (excluding high income),true,world_bank
+ECS,Z7,Europe & Central Asia,true,world_bank
+ECU,EC,Ecuador,false,world_bank;who
+EGY,EG,"Egypt, Arab Rep.",false,world_bank;who
+EMU,XC,Euro area,true,world_bank
+ERI,ER,Eritrea,false,world_bank;who
+ESP,ES,Spain,false,world_bank;who
+EST,EE,Estonia,false,world_bank;who
+ETH,ET,Ethiopia,false,world_bank;who
+EUU,EU,European Union,true,world_bank
+FCV,F2,"Fragility, Conflict, and Violence (FCV) situations",true,world_bank
+FIN,FI,Finland,false,world_bank;who
+FJI,FJ,Fiji,false,world_bank;who
+FLK,FK,Falkland Islands (Malvinas),false,who
+FRA,FR,France,false,world_bank;who
+FRO,FO,Faroe Islands,false,world_bank;who
+FSM,FM,"Micronesia, Fed. Sts.",false,world_bank;who
+FXS,6F,"IDA countries classified as fragile situations, excluding Sub-Saharan Africa",true,world_bank
+GAB,GA,Gabon,false,world_bank;who
+GBR,GB,United Kingdom,false,world_bank;who
+GEO,GE,Georgia,false,world_bank;who
+GHA,GH,Ghana,false,world_bank;who
+GIB,GI,Gibraltar,false,world_bank;who
+GIN,GN,Guinea,false,world_bank;who
+GLP,GP,Guadeloupe,false,who
+GMB,GM,"Gambia, The",false,world_bank;who
+GNB,GW,Guinea-Bissau,false,world_bank;who
+GNQ,GQ,Equatorial Guinea,false,world_bank;who
+GRC,GR,Greece,false,world_bank;who
+GRD,GD,Grenada,false,world_bank;who
+GRL,GL,Greenland,false,world_bank;who
+GTM,GT,Guatemala,false,world_bank;who
+GUF,GF,French Guiana,false,who
+GUM,GU,Guam,false,world_bank;who
+GUY,GY,Guyana,false,world_bank;who
+HIC,XD,High income,true,world_bank
+HKG,HK,"Hong Kong SAR, China",false,world_bank;who
+HND,HN,Honduras,false,world_bank;who
+HPC,XE,Heavily indebted poor countries (HIPC),true,world_bank
+HRV,HR,Croatia,false,world_bank;who
+HTI,HT,Haiti,false,world_bank;who
+HUN,HU,Hungary,false,world_bank;who
+IBB,ZB,"IBRD, including blend",true,world_bank
+IBD,XF,IBRD only,true,world_bank
+IBT,ZT,IDA & IBRD total,true,world_bank
+IDA,XG,IDA total,true,world_bank
+IDB,XH,IDA blend,true,world_bank
+IDN,ID,Indonesia,false,world_bank;who
+IDX,XI,IDA only,true,world_bank
+IMN,IM,Isle of Man,false,world_bank;who
+IND,IN,India,false,world_bank;who
+INX,XY,Not classified,true,world_bank
+IRL,IE,Ireland,false,world_bank;who
+IRN,IR,"Iran, Islamic Rep.",false,world_bank;who
+IRQ,IQ,Iraq,false,world_bank;who
+ISL,IS,Iceland,false,world_bank;who
+ISR,IL,Israel,false,world_bank;who
+ITA,IT,Italy,false,world_bank;who
+JAM,JM,Jamaica,false,world_bank;who
+JOR,JO,Jordan,false,world_bank;who
+JPN,JP,Japan,false,world_bank;who
+KAZ,KZ,Kazakhstan,false,world_bank;who
+KEN,KE,Kenya,false,world_bank;who
+KGZ,KG,Kyrgyz Republic,false,world_bank;who
+KHM,KH,Cambodia,false,world_bank;who
+KIR,KI,Kiribati,false,world_bank;who
+KNA,KN,St. Kitts and Nevis,false,world_bank;who
+KOR,KR,"Korea, Rep.",false,world_bank;who
+KWT,KW,Kuwait,false,world_bank;who
+LAC,XJ,Latin America & Caribbean (excluding high income),true,world_bank
+LAO,LA,Lao PDR,false,world_bank;who
+LBN,LB,Lebanon,false,world_bank;who
+LBR,LR,Liberia,false,world_bank;who
+LBY,LY,Libya,false,world_bank;who
+LCA,LC,St. Lucia,false,world_bank;who
+LCN,ZJ,Latin America & Caribbean,true,world_bank
+LDC,XL,Least developed countries: UN classification,true,world_bank
+LIC,XM,Low income,true,world_bank
+LIE,LI,Liechtenstein,false,world_bank;who
+LKA,LK,Sri Lanka,false,world_bank;who
+LMC,XN,Lower middle income,true,world_bank
+LMY,XO,Low & middle income,true,world_bank
+LSO,LS,Lesotho,false,world_bank;who
+LTE,V3,Late-demographic dividend,true,world_bank
+LTU,LT,Lithuania,false,world_bank;who
+LUX,LU,Luxembourg,false,world_bank;who
+LVA,LV,Latvia,false,world_bank;who
+MAC,MO,"Macao SAR, China",false,world_bank;who
+MAF,MF,St. Martin (French part),false,world_bank
+MAR,MA,Morocco,false,world_bank;who
+MCO,MC,Monaco,false,world_bank;who
+MDA,MD,Moldova,false,world_bank;who
+MDE,M1,Middle East (developing only),true,world_bank
+MDG,MG,Madagascar,false,world_bank;who
+MDV,MV,Maldives,false,world_bank;who
+ME1,,The former state union Serbia and Montenegro,false,who
+MEA,ZQ,"Middle East, North Africa, Afghanistan & Pakistan",true,world_bank
+MEX,MX,Mexico,false,world_bank;who
+MHL,MH,Marshall Islands,false,world_bank;who
+MIC,XP,Middle income,true,world_bank
+MKD,MK,North Macedonia,false,world_bank;who
+MLI,ML,Mali,false,world_bank;who
+MLT,MT,Malta,false,world_bank;who
+MMR,MM,Myanmar,false,world_bank;who
+MNA,XQ,"Middle East, North Africa, Afghanistan & Pakistan (excluding high income)",true,world_bank
+MNE,ME,Montenegro,false,world_bank;who
+MNG,MN,Mongolia,false,world_bank;who
+MNP,MP,Northern Mariana Islands,false,world_bank;who
+MOZ,MZ,Mozambique,false,world_bank;who
+MRT,MR,Mauritania,false,world_bank;who
+MSR,MS,Montserrat,false,who
+MTQ,MQ,Martinique,false,who
+MUS,MU,Mauritius,false,world_bank;who
+MWI,MW,Malawi,false,world_bank;who
+MYS,MY,Malaysia,false,world_bank;who
+MYT,YT,Mayotte,false,who
+NAC,XU,North America,true,world_bank
+NAF,M2,North Africa,true,world_bank
+NAM,NA,Namibia,false,world_bank;who
+NCL,NC,New Caledonia,false,world_bank;who
+NER,NE,Niger,false,world_bank;who
+NGA,NG,Nigeria,false,world_bank;who
+NIC,NI,Nicaragua,false,world_bank;who
+NIU,NU,Niue,false,who
+NLD,NL,Netherlands,false,world_bank;who
+NOR,NO,Norway,false,world_bank;who
+NPL,NP,Nepal,false,world_bank;who
+NRS,6X,Non-resource rich Sub-Saharan Africa countries,true,world_bank
+NRU,NR,Naoero,false,world_bank;who
+NXS,6N,"IDA countries not classified as fragile situations, excluding Sub-Saharan Africa",true,world_bank
+NZL,NZ,New Zealand,false,world_bank;who
+OED,OE,OECD members,true,world_bank
+OMN,OM,Oman,false,world_bank;who
+OSS,S4,Other small states,true,world_bank
+PAK,PK,Pakistan,false,world_bank;who
+PAN,PA,Panama,false,world_bank;who
+PER,PE,Peru,false,world_bank;who
+PHL,PH,Philippines,false,world_bank;who
+PLW,PW,Palau,false,world_bank;who
+PNG,PG,Papua New Guinea,false,world_bank;who
+POL,PL,Poland,false,world_bank;who
+PRE,V1,Pre-demographic dividend,true,world_bank
+PRI,PR,Puerto Rico (US),false,world_bank;who
+PRK,KP,"Korea, Dem. People's Rep.",false,world_bank;who
+PRS,,Pristina,false,who
+PRT,PT,Portugal,false,world_bank;who
+PRY,PY,Paraguay,false,world_bank;who
+PSE,PS,West Bank and Gaza,false,world_bank;who
+PSS,S2,Pacific island small states,true,world_bank
+PST,V4,Post-demographic dividend,true,world_bank
+PYF,PF,French Polynesia,false,world_bank;who
+QAT,QA,Qatar,false,world_bank;who
+REU,RE,Reunion,false,who
+ROU,RO,Romania,false,world_bank;who
+RRS,R6,Resource rich Sub-Saharan Africa countries,true,world_bank
+RUS,RU,Russian Federation,false,world_bank;who
+RWA,RW,Rwanda,false,world_bank;who
+SAS,8S,South Asia,true,world_bank
+SAU,SA,Saudi Arabia,false,world_bank;who
+SDN,SD,Sudan,false,world_bank;who
+SDN736,,Sudan (former),false,who
+SEN,SN,Senegal,false,world_bank;who
+SGP,SG,Singapore,false,world_bank;who
+SHN,SH,"St Helena, Ascension and Tristan da Cunha",false,who
+SLB,SB,Solomon Islands,false,world_bank;who
+SLE,SL,Sierra Leone,false,world_bank;who
+SLV,SV,El Salvador,false,world_bank;who
+SMR,SM,San Marino,false,world_bank;who
+SOM,SO,"Somalia, Fed. Rep.",false,world_bank;who
+SPM,PM,Saint Pierre and Miquelon,false,who
+SRB,RS,Serbia,false,world_bank;who
+SSA,ZF,Sub-Saharan Africa (excluding high income),true,world_bank
+SSD,SS,South Sudan,false,world_bank;who
+SSF,ZG,Sub-Saharan Africa,true,world_bank
+SST,S1,Small states,true,world_bank
+STP,ST,Sao Tome and Principe,false,world_bank;who
+SUR,SR,Suriname,false,world_bank;who
+SVK,SK,Slovak Republic,false,world_bank;who
+SVN,SI,Slovenia,false,world_bank;who
+SWE,SE,Sweden,false,world_bank;who
+SWZ,SZ,Eswatini,false,world_bank;who
+SXM,SX,Sint Maarten (Dutch part),false,world_bank;who
+SXZ,A4,Sub-Saharan Africa excluding South Africa,true,world_bank
+SYC,SC,Seychelles,false,world_bank;who
+SYR,SY,Syrian Arab Republic,false,world_bank;who
+TCA,TC,Turks and Caicos Islands,false,world_bank;who
+TCD,TD,Chad,false,world_bank;who
+TEA,T4,East Asia & Pacific (IDA & IBRD countries),true,world_bank
+TEC,T7,Europe & Central Asia (IDA & IBRD countries),true,world_bank
+TGO,TG,Togo,false,world_bank;who
+THA,TH,Thailand,false,world_bank;who
+TJK,TJ,Tajikistan,false,world_bank;who
+TKL,TK,Tokelau,false,who
+TKM,TM,Turkmenistan,false,world_bank;who
+TLA,T2,Latin America & the Caribbean (IDA & IBRD countries),true,world_bank
+TLS,TL,Timor-Leste,false,world_bank;who
+TMN,T3,"Middle East, North Africa, Afghanistan & Pakistan (IDA & IBRD)",true,world_bank
+TON,TO,Tonga,false,world_bank;who
+TSA,T5,South Asia (IDA & IBRD),true,world_bank
+TSS,T6,Sub-Saharan Africa (IDA & IBRD countries),true,world_bank
+TTO,TT,Trinidad and Tobago,false,world_bank;who
+TUN,TN,Tunisia,false,world_bank;who
+TUR,TR,Turkiye,false,world_bank;who
+TUV,TV,Tuvalu,false,world_bank;who
+TZA,TZ,Tanzania,false,world_bank;who
+UGA,UG,Uganda,false,world_bank;who
+UKR,UA,Ukraine,false,world_bank;who
+UMC,XT,Upper middle income,true,world_bank
+URY,UY,Uruguay,false,world_bank;who
+USA,US,United States,false,world_bank;who
+UZB,UZ,Uzbekistan,false,world_bank;who
+VCT,VC,St. Vincent and the Grenadines,false,world_bank;who
+VEN,VE,"Venezuela, RB",false,world_bank;who
+VGB,VG,British Virgin Islands,false,world_bank;who
+VIR,VI,Virgin Islands (U.S.),false,world_bank;who
+VNM,VN,Viet Nam,false,world_bank;who
+VUT,VU,Vanuatu,false,world_bank;who
+WLD,1W,World,true,world_bank
+WLF,WF,Wallis and Futuna Islands,false,who
+WSM,WS,Samoa,false,world_bank;who
+XKX,XK,Kosovo,false,world_bank;who
+XZN,A5,Sub-Saharan Africa excluding South Africa and Nigeria,true,world_bank
+YEM,YE,"Yemen, Rep.",false,world_bank;who
+ZAF,ZA,South Africa,false,world_bank;who
+ZMB,ZM,Zambia,false,world_bank;who
+ZWE,ZW,Zimbabwe,false,world_bank;who

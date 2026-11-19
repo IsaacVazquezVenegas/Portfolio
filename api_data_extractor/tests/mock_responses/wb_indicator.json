@@ -1,0 +1,21 @@
+[
+ {
+  "page": 1,
+  "pages": 1,
+  "per_page": "50",
+  "total": 1
+ },
+ [
+  {
+   "id": "SH.PRV.SMOK",
+   "name": "Prevalence of current tobacco use (% of adults)",
+   "unit": "",
+   "source": {
+    "id": "2",
+    "value": "World Development Indicators"
+   },
+   "sourceNote": "The percentage of the population ages 15 years and over who currently use any tobacco product.",
+   "sourceOrganization": "WHO GHO"
+  }
+ ]
+]

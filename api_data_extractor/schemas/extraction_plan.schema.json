@@ -1,0 +1,505 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "api_data_extractor/ExtractionPlan/1.0",
+  "$defs": {
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "draft",
+          "enum": [
+            "draft",
+            "approved",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "approved_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved By"
+        },
+        "approved_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approved On"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "title": "Approval",
+      "type": "object"
+    },
+    "IndicatorMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "research_variable": {
+          "title": "Research Variable",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "indicator_code": {
+          "title": "Indicator Code",
+          "type": "string"
+        },
+        "official_name": {
+          "title": "Official Name",
+          "type": "string"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "measurement_scale": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurement Scale"
+        },
+        "population_coverage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Population Coverage"
+        },
+        "geographic_coverage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Geographic Coverage"
+        },
+        "time_coverage": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Time Coverage"
+        },
+        "aggregation_methodology": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aggregation Methodology"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "documentation_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Documentation Url"
+        },
+        "alternatives_considered": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Alternatives Considered",
+          "type": "array"
+        },
+        "verification_status": {
+          "enum": [
+            "confirmed",
+            "partially_verified",
+            "unverified"
+          ],
+          "title": "Verification Status",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/VerificationEvidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "research_variable",
+        "source",
+        "indicator_code",
+        "official_name",
+        "verification_status"
+      ],
+      "title": "IndicatorMapping",
+      "type": "object"
+    },
+    "PlanSource": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_\\-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "api_name": {
+          "title": "Api Name",
+          "type": "string"
+        },
+        "api_type": {
+          "title": "Api Type",
+          "type": "string"
+        },
+        "documentation_url": {
+          "title": "Documentation Url",
+          "type": "string"
+        },
+        "base_url": {
+          "title": "Base Url",
+          "type": "string"
+        },
+        "authentication": {
+          "title": "Authentication",
+          "type": "string"
+        },
+        "rate_limits": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rate Limits"
+        },
+        "metadata_available": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Metadata Available"
+        },
+        "update_frequency": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Update Frequency"
+        },
+        "priority": {
+          "default": "official_api",
+          "enum": [
+            "official_api",
+            "official_download",
+            "official_database",
+            "secondary"
+          ],
+          "title": "Priority",
+          "type": "string"
+        },
+        "proposed_connector": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Proposed Connector"
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "api_name",
+        "api_type",
+        "documentation_url",
+        "base_url",
+        "authentication"
+      ],
+      "title": "PlanSource",
+      "type": "object"
+    },
+    "ResearchRequirements": {
+      "additionalProperties": false,
+      "properties": {
+        "objective": {
+          "title": "Objective",
+          "type": "string"
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        },
+        "variables": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Variables",
+          "type": "array"
+        },
+        "geographic_coverage": {
+          "title": "Geographic Coverage",
+          "type": "string"
+        },
+        "time_period": {
+          "title": "Time Period",
+          "type": "string"
+        },
+        "frequency": {
+          "title": "Frequency",
+          "type": "string"
+        },
+        "aggregation_level": {
+          "title": "Aggregation Level",
+          "type": "string"
+        },
+        "output_formats": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Output Formats",
+          "type": "array"
+        },
+        "analytical_applications": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Analytical Applications",
+          "type": "array"
+        },
+        "stated_by_user": {
+          "description": "Requirements explicitly provided by the user.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Stated By User",
+          "type": "array"
+        },
+        "assumptions": {
+          "description": "Assumptions made by the LLM, to be confirmed.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "objective",
+        "subject",
+        "variables",
+        "geographic_coverage",
+        "time_period",
+        "frequency",
+        "aggregation_level"
+      ],
+      "title": "ResearchRequirements",
+      "type": "object"
+    },
+    "VerificationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "description": "Exact query or URL used.",
+          "title": "Query",
+          "type": "string"
+        },
+        "performed_on": {
+          "format": "date",
+          "title": "Performed On",
+          "type": "string"
+        },
+        "result": {
+          "description": "What the query returned.",
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "query",
+        "performed_on",
+        "result"
+      ],
+      "title": "VerificationEvidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "plan_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]{0,63}$",
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "created": {
+      "format": "date",
+      "title": "Created",
+      "type": "string"
+    },
+    "prepared_by": {
+      "description": "Who prepared the plan, e.g. 'LLM (model name) with researcher'.",
+      "title": "Prepared By",
+      "type": "string"
+    },
+    "research": {
+      "$ref": "#/$defs/ResearchRequirements"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/PlanSource"
+      },
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "indicator_mapping": {
+      "items": {
+        "$ref": "#/$defs/IndicatorMapping"
+      },
+      "minItems": 1,
+      "title": "Indicator Mapping",
+      "type": "array"
+    },
+    "expected_data_structure": {
+      "title": "Expected Data Structure",
+      "type": "string"
+    },
+    "known_limitations": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Known Limitations",
+      "type": "array"
+    },
+    "outstanding_decisions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Outstanding Decisions",
+      "type": "array"
+    },
+    "approval": {
+      "$ref": "#/$defs/Approval"
+    }
+  },
+  "required": [
+    "plan_id",
+    "created",
+    "prepared_by",
+    "research",
+    "sources",
+    "indicator_mapping",
+    "expected_data_structure"
+  ],
+  "title": "Extraction plan",
+  "type": "object"
+}

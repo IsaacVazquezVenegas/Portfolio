@@ -1,0 +1,904 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "api_data_extractor/ExtractionConfig/1.0",
+  "$defs": {
+    "Authentication": {
+      "additionalProperties": false,
+      "properties": {
+        "method": {
+          "default": "none",
+          "enum": [
+            "none",
+            "api_key_header",
+            "api_key_query",
+            "bearer_token"
+          ],
+          "title": "Method",
+          "type": "string"
+        },
+        "env_var": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z_][A-Z0-9_]{0,127}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of the environment variable that holds the secret (never the secret).",
+          "title": "Env Var"
+        },
+        "param_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Header name (api_key_header) or query parameter name (api_key_query).",
+          "title": "Param Name"
+        }
+      },
+      "title": "Authentication",
+      "type": "object"
+    },
+    "ExtractionTask": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_\\-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "description": "id of an entry in 'sources'.",
+          "title": "Source",
+          "type": "string"
+        },
+        "indicators": {
+          "items": {
+            "$ref": "#/$defs/IndicatorSpec"
+          },
+          "minItems": 1,
+          "title": "Indicators",
+          "type": "array"
+        },
+        "countries": {
+          "anyOf": [
+            {
+              "const": "all",
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          ],
+          "description": "'all' or a list of country codes in the source's own coding (e.g. ISO3 for WHO, ISO2 for Eurostat).",
+          "title": "Countries"
+        },
+        "start_year": {
+          "maximum": 2100,
+          "minimum": 1800,
+          "title": "Start Year",
+          "type": "integer"
+        },
+        "end_year": {
+          "maximum": 2100,
+          "minimum": 1800,
+          "title": "End Year",
+          "type": "integer"
+        },
+        "frequency": {
+          "default": "annual",
+          "enum": [
+            "annual",
+            "quarterly",
+            "monthly",
+            "any"
+          ],
+          "title": "Frequency",
+          "type": "string"
+        },
+        "filters": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Dimension filters applied to all indicators.",
+          "title": "Filters",
+          "type": "object"
+        },
+        "query_params": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          },
+          "description": "Extra query parameters (templates allowed).",
+          "title": "Query Params",
+          "type": "object"
+        },
+        "country_batch_size": {
+          "default": 50,
+          "description": "Countries per request.",
+          "maximum": 500,
+          "minimum": 1,
+          "title": "Country Batch Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "indicators",
+        "countries",
+        "start_year",
+        "end_year"
+      ],
+      "title": "ExtractionTask",
+      "type": "object"
+    },
+    "IndicatorSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "maxLength": 200,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9_.\\-]+$",
+          "title": "Code",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Official indicator name, checked against source metadata.",
+          "title": "Name"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Definition"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        },
+        "measurement_scale": {
+          "anyOf": [
+            {
+              "enum": [
+                "ratio",
+                "interval",
+                "ordinal",
+                "nominal",
+                "count",
+                "text"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Measurement Scale"
+        },
+        "filters": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "description": "Indicator-specific dimension filters.",
+          "title": "Filters",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "IndicatorSpec",
+      "type": "object"
+    },
+    "MissingValues": {
+      "additionalProperties": false,
+      "properties": {
+        "treatment": {
+          "default": "keep",
+          "description": "keep: retain rows and flag them (missing=True); drop: remove them (counted in the manifest).",
+          "enum": [
+            "keep",
+            "drop"
+          ],
+          "title": "Treatment",
+          "type": "string"
+        },
+        "markers": {
+          "description": "Text values that mean 'no observation', e.g. '..'.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Markers",
+          "type": "array"
+        }
+      },
+      "title": "MissingValues",
+      "type": "object"
+    },
+    "OutputSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "directory": {
+          "default": "output",
+          "description": "Relative to the configuration file.",
+          "title": "Directory",
+          "type": "string"
+        },
+        "folder_name": {
+          "default": "{project}_{timestamp}",
+          "description": "Placeholders: {project}, {date}, {year}, {timestamp}.",
+          "title": "Folder Name",
+          "type": "string"
+        },
+        "overwrite": {
+          "default": false,
+          "title": "Overwrite",
+          "type": "boolean"
+        },
+        "formats": {
+          "items": {
+            "enum": [
+              "csv",
+              "xlsx",
+              "json"
+            ],
+            "type": "string"
+          },
+          "title": "Formats",
+          "type": "array"
+        },
+        "data_dictionary": {
+          "default": true,
+          "title": "Data Dictionary",
+          "type": "boolean"
+        },
+        "readme": {
+          "default": true,
+          "title": "Readme",
+          "type": "boolean"
+        }
+      },
+      "title": "OutputSettings",
+      "type": "object"
+    },
+    "PaginationConfig": {
+      "additionalProperties": false,
+      "description": "Pagination for the generic REST connector (dedicated connectors handle their own).",
+      "properties": {
+        "type": {
+          "default": "none",
+          "enum": [
+            "none",
+            "page",
+            "offset",
+            "next_link"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "page_param": {
+          "default": "page",
+          "title": "Page Param",
+          "type": "string"
+        },
+        "first_page": {
+          "default": 1,
+          "minimum": 0,
+          "title": "First Page",
+          "type": "integer"
+        },
+        "page_size_param": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Size Param"
+        },
+        "page_size": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 100000,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Size"
+        },
+        "offset_param": {
+          "default": "offset",
+          "title": "Offset Param",
+          "type": "string"
+        },
+        "limit_param": {
+          "default": "limit",
+          "title": "Limit Param",
+          "type": "string"
+        },
+        "total_pages_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dotted path to the total page count in the response.",
+          "title": "Total Pages Path"
+        },
+        "next_link_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Dotted path to the next-page URL in the response.",
+          "title": "Next Link Path"
+        },
+        "max_pages": {
+          "default": 1000,
+          "maximum": 100000,
+          "minimum": 1,
+          "title": "Max Pages",
+          "type": "integer"
+        }
+      },
+      "title": "PaginationConfig",
+      "type": "object"
+    },
+    "Processing": {
+      "additionalProperties": false,
+      "properties": {
+        "preserve_raw": {
+          "const": true,
+          "default": true,
+          "description": "Raw responses are always preserved.",
+          "title": "Preserve Raw",
+          "type": "boolean"
+        },
+        "country_codes": {
+          "default": "iso3",
+          "description": "Harmonise country identifiers to ISO 3166 alpha-3.",
+          "enum": [
+            "iso3",
+            "source"
+          ],
+          "title": "Country Codes",
+          "type": "string"
+        },
+        "numeric_values": {
+          "default": "source_numeric_only",
+          "description": "source_numeric_only: only values the API marks as numeric populate 'value'. parse_plain_numbers: also convert text values that are plain numbers (never categories).",
+          "enum": [
+            "source_numeric_only",
+            "parse_plain_numbers"
+          ],
+          "title": "Numeric Values",
+          "type": "string"
+        },
+        "standardise_periods": {
+          "default": true,
+          "title": "Standardise Periods",
+          "type": "boolean"
+        },
+        "missing_values": {
+          "$ref": "#/$defs/MissingValues"
+        },
+        "deduplicate": {
+          "default": true,
+          "description": "Remove exact duplicate observations; conflicting duplicates are only flagged.",
+          "title": "Deduplicate",
+          "type": "boolean"
+        },
+        "wide_panel": {
+          "default": false,
+          "description": "Also produce a country-year wide panel.",
+          "title": "Wide Panel",
+          "type": "boolean"
+        }
+      },
+      "title": "Processing",
+      "type": "object"
+    },
+    "ProjectInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "Short identifier, used in output folder names.",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_\\-]{0,63}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "version": {
+          "description": "Version of this configuration.",
+          "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+          "title": "Version",
+          "type": "string"
+        },
+        "created": {
+          "format": "date",
+          "title": "Created",
+          "type": "string"
+        },
+        "extraction_plan": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Path (relative to the configuration file) of the related extraction_plan.json.",
+          "title": "Extraction Plan"
+        },
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Authors",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "version",
+        "created"
+      ],
+      "title": "ProjectInfo",
+      "type": "object"
+    },
+    "RequestSettings": {
+      "additionalProperties": false,
+      "properties": {
+        "timeout_seconds": {
+          "default": 60,
+          "exclusiveMinimum": 0,
+          "maximum": 600,
+          "title": "Timeout Seconds",
+          "type": "number"
+        },
+        "max_retries": {
+          "default": 3,
+          "maximum": 10,
+          "minimum": 0,
+          "title": "Max Retries",
+          "type": "integer"
+        },
+        "backoff_seconds": {
+          "default": 2.0,
+          "description": "Base delay; doubles after each retry.",
+          "maximum": 120,
+          "minimum": 0,
+          "title": "Backoff Seconds",
+          "type": "number"
+        },
+        "min_interval_seconds": {
+          "default": 0.5,
+          "description": "Minimum delay between two requests (rate limit).",
+          "maximum": 60,
+          "minimum": 0,
+          "title": "Min Interval Seconds",
+          "type": "number"
+        },
+        "headers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Non-secret request headers.",
+          "title": "Headers",
+          "type": "object"
+        }
+      },
+      "title": "RequestSettings",
+      "type": "object"
+    },
+    "ResponseMapping": {
+      "additionalProperties": false,
+      "description": "How the generic REST connector finds observations in a JSON response.",
+      "properties": {
+        "records_path": {
+          "default": "",
+          "description": "Dotted path to the list of records; empty string = response root.",
+          "title": "Records Path",
+          "type": "string"
+        },
+        "fields": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Standard field name -> dotted path inside each record.",
+          "title": "Fields",
+          "type": "object"
+        },
+        "country_separator": {
+          "default": ";",
+          "description": "Separator used when {countries} is filled with several codes.",
+          "title": "Country Separator",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fields"
+      ],
+      "title": "ResponseMapping",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^[A-Za-z][A-Za-z0-9_\\-]{0,63}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "provider": {
+          "title": "Provider",
+          "type": "string"
+        },
+        "api_name": {
+          "title": "Api Name",
+          "type": "string"
+        },
+        "api_type": {
+          "enum": [
+            "rest",
+            "odata",
+            "json-stat",
+            "sdmx"
+          ],
+          "title": "Api Type",
+          "type": "string"
+        },
+        "connector": {
+          "description": "Identifier of an approved connector (see `python -m src.main connectors`).",
+          "title": "Connector",
+          "type": "string"
+        },
+        "base_url": {
+          "title": "Base Url",
+          "type": "string"
+        },
+        "endpoint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Endpoint template relative to base_url (generic_rest only), e.g. 'series/{indicator}'.",
+          "title": "Endpoint"
+        },
+        "documentation_url": {
+          "title": "Documentation Url",
+          "type": "string"
+        },
+        "api_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Api Version"
+        },
+        "authentication": {
+          "$ref": "#/$defs/Authentication"
+        },
+        "request": {
+          "$ref": "#/$defs/RequestSettings"
+        },
+        "pagination": {
+          "$ref": "#/$defs/PaginationConfig"
+        },
+        "response": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResponseMapping"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "allow_insecure_http": {
+          "default": false,
+          "description": "Permit plain http:// (discouraged).",
+          "title": "Allow Insecure Http",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "api_name",
+        "api_type",
+        "connector",
+        "base_url",
+        "documentation_url"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "ValidationRules": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_indicators": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Defaults to every requested indicator.",
+          "title": "Expected Indicators"
+        },
+        "expected_countries": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Defaults to the requested countries (when not 'all'). Compared after harmonisation.",
+          "title": "Expected Countries"
+        },
+        "expected_start_year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected Start Year"
+        },
+        "expected_end_year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expected End Year"
+        },
+        "check_duplicates": {
+          "default": true,
+          "title": "Check Duplicates",
+          "type": "boolean"
+        },
+        "check_missing": {
+          "default": true,
+          "title": "Check Missing",
+          "type": "boolean"
+        },
+        "check_units": {
+          "default": true,
+          "title": "Check Units",
+          "type": "boolean"
+        },
+        "check_indicator_definitions": {
+          "default": true,
+          "title": "Check Indicator Definitions",
+          "type": "boolean"
+        },
+        "check_coverage": {
+          "default": true,
+          "title": "Check Coverage",
+          "type": "boolean"
+        },
+        "min_records": {
+          "default": 1,
+          "minimum": 0,
+          "title": "Min Records",
+          "type": "integer"
+        },
+        "max_missing_share": {
+          "default": 0.5,
+          "description": "Warn when the share of missing values exceeds this.",
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Max Missing Share",
+          "type": "number"
+        },
+        "fail_on_request_error": {
+          "default": false,
+          "description": "Abort at the first failed request instead of continuing.",
+          "title": "Fail On Request Error",
+          "type": "boolean"
+        }
+      },
+      "title": "ValidationRules",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "project": {
+      "$ref": "#/$defs/ProjectInfo"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/Source"
+      },
+      "minItems": 1,
+      "title": "Sources",
+      "type": "array"
+    },
+    "extractions": {
+      "items": {
+        "$ref": "#/$defs/ExtractionTask"
+      },
+      "minItems": 1,
+      "title": "Extractions",
+      "type": "array"
+    },
+    "processing": {
+      "$ref": "#/$defs/Processing"
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationRules"
+    },
+    "output": {
+      "$ref": "#/$defs/OutputSettings"
+    }
+  },
+  "required": [
+    "project",
+    "sources",
+    "extractions"
+  ],
+  "title": "Extraction configuration",
+  "type": "object"
+}

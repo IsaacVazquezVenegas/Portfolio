@@ -1,0 +1,121 @@
+# WHO MPOWER – tobacco control policy scores and tobacco use prevalence.
+# Generated from extraction_plan.json (plan_id WHO_MPOWER). Validate with:
+#   python -m src.main validate --config projects/WHO_MPOWER/extraction_config.yaml
+schema_version: "1.0"
+
+project:
+  name: WHO_MPOWER
+  description: >-
+    WHO MPOWER tobacco control policy achievement levels (M, P, O, W, W-mass media,
+    E, R) for all WHO Member States, 2007-2022, with age-standardised current
+    tobacco use prevalence for context.
+  version: "1.0.0"
+  created: 2026-11-19
+  extraction_plan: extraction_plan.json
+
+sources:
+  - id: who_gho
+    provider: World Health Organization
+    api_name: Global Health Observatory OData API
+    api_type: odata
+    connector: who_gho
+    base_url: https://ghoapi.azureedge.net/api
+    documentation_url: https://www.who.int/data/gho/info/gho-odata-api
+    authentication:
+      method: none
+    request:
+      timeout_seconds: 90
+      max_retries: 3
+      backoff_seconds: 2
+      min_interval_seconds: 0.5
+
+extractions:
+  - id: mpower_scores
+    source: who_gho
+    countries: all
+    start_year: 2007
+    end_year: 2022
+    frequency: annual
+    filters:
+      SpatialDimType: COUNTRY
+    indicators:
+      - code: M_Group
+        name: Monitoring tobacco use and prevention policies
+        category: M - Monitor
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: P_Group
+        name: Protecting people from tobacco smoke
+        category: P - Protect
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: O_Group
+        name: Offering help to quit tobacco use
+        category: O - Offer
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: W_Group
+        name: Warning about the dangers of tobacco
+        category: W - Warn (health warnings)
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: W-MM_Group
+        name: Anti-tobacco mass media campaigns
+        category: W - Warn (mass media)
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: E_Group
+        name: Enforcing bans on tobacco advertising, promotion and sponsorship
+        category: E - Enforce
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+      - code: R_Group
+        name: Raising taxes on tobacco
+        category: R - Raise
+        measurement_scale: ordinal
+        unit: MPOWER group (ordinal category)
+
+  - id: tobacco_prevalence
+    source: who_gho
+    countries: all
+    start_year: 2007
+    end_year: 2022
+    frequency: annual
+    filters:
+      SpatialDimType: COUNTRY
+    indicators:
+      - code: M_Est_tob_curr_std
+        name: Estimate of current tobacco use prevalence (%) (age-standardized)
+        category: Context - prevalence
+        measurement_scale: ratio
+        unit: "% of population aged 15+"
+        filters:
+          Dim1: [SEX_BTSX, SEX_MLE, SEX_FMLE]
+
+processing:
+  country_codes: iso3
+  numeric_values: source_numeric_only   # MPOWER levels stay categorical (value_text)
+  standardise_periods: true
+  missing_values:
+    treatment: keep
+    markers: []                         # "Not applicable" is meaningful and is kept as a value
+  deduplicate: true
+  wide_panel: true
+
+validation:
+  check_duplicates: true
+  check_missing: true
+  check_units: true
+  check_indicator_definitions: true
+  check_coverage: true
+  min_records: 1
+  max_missing_share: 0.5
+  fail_on_request_error: false
+
+output:
+  directory: output
+  folder_name: "{project}_{timestamp}"
+  overwrite: false
+  formats: [csv, xlsx, json]
+  data_dictionary: true
+  readme: true

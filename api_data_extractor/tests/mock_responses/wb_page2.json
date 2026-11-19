@@ -1,0 +1,28 @@
+[
+ {
+  "page": 2,
+  "pages": 2,
+  "per_page": 1000,
+  "total": 3,
+  "sourceid": "2",
+  "lastupdated": "2026-10-28"
+ },
+ [
+  {
+   "indicator": {
+    "id": "SH.PRV.SMOK",
+    "value": "Prevalence of current tobacco use (% of adults)"
+   },
+   "country": {
+    "id": "DE",
+    "value": "Germany"
+   },
+   "countryiso3code": "DEU",
+   "date": "2020",
+   "value": 22.0,
+   "unit": "",
+   "obs_status": "",
+   "decimal": 1
+  }
+ ]
+]
