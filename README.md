@@ -1,2 +1,2 @@
 # Portfolio
-My portfolio of R code and QGIS 
+A collection of all
