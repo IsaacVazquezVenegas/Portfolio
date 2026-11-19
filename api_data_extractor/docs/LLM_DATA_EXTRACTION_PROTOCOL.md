@@ -32,23 +32,82 @@ If your environment cannot browse the web or call APIs, say so explicitly at the
 
 ---
 
-## Stage 1 — Research requirements
+## Stage 1 — Scoping the request
 
-Collect, and restate in a short table:
+**Goal of the stage:** turn whatever the researcher brings (a question, a list of names, a screenshot, a spreadsheet, indicator codes) into a **Requirements Register**: one row per thing to retrieve, each mapped to a *candidate retrieval unit* or explicitly parked. Stage 1 ends when nothing in the register is left undecided, not when every detail is known.
 
-- research objective and subject matter
-- variables / indicators wanted (in the researcher's words)
-- geographic coverage (countries, regions, "all countries")
-- time period and desired frequency (annual, quarterly, monthly)
-- level of aggregation (country, region, sex, age group…)
-- output formats (CSV, Excel, JSON; long format or country-year panel)
-- intended analytical use (descriptive, panel regression, mapping…)
+### 1.1 Opening message
 
-For each item record whether it was **stated** or **assumed** (→ `research.stated_by_user` / `research.assumptions`).
+Start every new project with this message (adapt the wording, keep the structure). Do not ask anything else first.
+
+```markdown
+Let's define the data to retrieve. Tell me as much as you already know. Any form works:
+a list of names, a screenshot or table, indicator codes, or just the research question.
+
+**1. What do you need?** Pick the closest starting point:
+   A. I know the source and the indicator codes / dataset names → paste them.
+   B. I know the source or dataset, but only by name or description (e.g. "WHO MPOWER policies")
+      → list them as you would describe them; I'll find the exact indicators.
+   C. I have a research question or topic only → describe it; I'll propose sources and indicators.
+
+**2. Scope.** These defaults apply unless you say otherwise:
+   - Countries: all available · Period: all available years · Breakdown: national totals
+   - Output: long-format CSV + Excel (+ country-year panel)
+
+**3. Purpose (one line).** What will the data be used for (descriptive overview, panel regression,
+   simulation model inputs…)? This only helps me choose between alternative indicators.
+```
+
+### 1.2 Build the Requirements Register
+
+Parse the researcher's input and return a register. Keep **their wording** in its own column, and never overwrite it with your interpretation.
+
+| ID | Researcher's wording | Group | Interpreted concept | Kind of data | Candidate retrieval unit | Status | Question |
+|---|---|---|---|---|---|---|---|
+
+* **Group** — the researcher's own grouping (component, theme, sheet…), if any.
+* **Kind of data** — one of: *policy / legislation*, *programme or service availability*, *outcome / prevalence*, *composite index or score*, *price / tax*, *intervention effect (efficacy)*, *other*. Classifying matters because different kinds live in different sources. For example, intervention efficacy (such as "combination NRT vs patch") comes from trials and reviews, not from country monitoring APIs.
+* **Candidate retrieval unit** — what would be requested: a single indicator, a dataset/bundle, or a composite. It may come from a light catalogue look-up (§1.4) and is always *unverified* until Stage 4.
+* **Status** — `clear` (one obvious candidate) · `ambiguous` (several readings, so a question is needed) · `needs another source` (the concept exists but not in the source family being explored) · `parked` (out of scope for this extraction, kept for the record) · `dropped` (removed by the researcher).
+
+Also record the scope (countries, period, breakdowns, outputs) and mark every item as **stated** or **assumed** (→ `research.stated_by_user` / `research.assumptions`).
+
+### 1.3 Composite indices versus their components
+
+Many requests mix composite scores with the variables they are built from (for example, WHO MPOWER group scores vs. the individual legal provisions). For every such item:
+
+1. Identify the three possible levels: the **composite** (index/score), the **bundle** (dataset or table holding all components of that composite), and the **single components**.
+2. When the researcher's items touch several components of the same composite, recommend retrieving the **whole bundle** ("retrieve wide, select later"). It costs a few requests, keeps the set internally consistent, and lets the researcher choose components during analysis without a new extraction. Retrieve the composite as well, as a reference.
+3. Retrieve single components only when the researcher needs just one or two of them, or when no bundle exists.
+4. Never compute, rescale or re-weight an index. If the researcher wants a derived index, record it as an analytical step outside the extraction.
+
+### 1.4 Light catalogue look-ups are allowed
+
+To resolve ambiguity you may search the candidate source's catalogue during Stage 1, for example the indicator list and dimension values. Report candidates as *unverified*. Full source documentation (Stage 2), definitions (Stage 3) and availability checks (Stage 4) come later. Do not let catalogue browsing grow into a survey of everything available: look up only what resolves a register row.
+
+### 1.5 Iterating without drifting
+
+Stages 1–2 are naturally back-and-forth. Keep them converging:
+
+* **One question round per turn**, at most **five questions**. Each question has a proposed default ("If you don't mind, I'll …"), so silence still moves the register forward.
+* Ask only questions whose answer changes *what is retrieved*: which concept, which source, which breakdown, which period.
+* **The register is the single state of the conversation.** End every turn with the updated register (or just the changed rows) and a two-line status: *settled* / *open*.
+* **Drift guard:** when the discussion moves to analysis, modelling or interpretation, write the point in an *analytical notes* list and return to the open register rows. The task is defining and locating the data.
+* Items that cannot come from the source family under discussion go to `needs another source` or `parked` with a one-line reason. Do not chase them inside Stage 1.
+
+### 1.6 Exit criteria
+
+Stage 1 is complete when:
+
+- every register row is `clear`, `needs another source` (with a named candidate source to explore in Stage 2), `parked` or `dropped`;
+- the retrieval strategy is stated (which bundles, composites and single indicators);
+- the scope is set, explicitly or by accepted defaults.
+
+Hand-over to Stage 2: the register's `clear` and `needs another source` rows are the work list. A complete worked example is in `docs/examples/WHO_MPOWER_stage1.md`.
 
 ## Stage 2 — Data-source discovery
 
-For each candidate source, report:
+Work through the register rows from Stage 1, starting with the sources they point to. For each candidate source, report:
 
 | Field | Example |
 |---|---|
