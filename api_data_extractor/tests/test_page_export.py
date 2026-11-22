@@ -193,6 +193,43 @@ def test_export_run_summarises_and_publishes_servable_files(tmp_path, monkeypatc
     assert res["series"] == 2
 
 
+def test_large_csv_files_are_published_as_parts_that_join_back(tmp_path, monkeypatch):
+    import src.page_export as pe
+
+    monkeypatch.setattr(pe, "MAX_CSV_PART_BYTES", 250)
+    run = fake_run(tmp_path)
+    original = (run / "dataset.csv").read_bytes()
+    target = tmp_path / "site" / "data" / "TEST" / "runs" / run.name
+    summary = export_run(run, tmp_path / "site", plan_id="TEST")
+    entry = {f["name"]: f for f in summary["files"]}["dataset.csv"]
+    assert entry["build"] == "join_csv" and len(entry["parts"]) > 1
+    assert not (target / "dataset.csv").exists()
+    texts = [(target / p).read_bytes() for p in entry["parts"]]
+    header = original.split(b"\n", 1)[0].lstrip(b"\xef\xbb\xbf")
+    assert texts[0].startswith(b"\xef\xbb\xbf") and all(t.startswith(header) for t in texts[1:])
+    # the page joins the parts by dropping the header line of parts 2+
+    joined = texts[0] + b"".join(t.split(b"\n", 1)[1] for t in texts[1:])
+    assert joined == original
+    assert all((target / p).stat().st_size <= 250 for p in entry["parts"])
+
+
+def test_small_csv_files_are_published_as_they_are(tmp_path):
+    run = fake_run(tmp_path)
+    summary = export_run(run, tmp_path / "site", plan_id="TEST")
+    entry = {f["name"]: f for f in summary["files"]}["dataset.csv"]
+    assert entry["path"] == "dataset.csv" and "build" not in entry
+
+
+def test_workbook_cells_drop_control_characters():
+    import pandas as pd
+
+    from src.export import add_sheet
+
+    wb = Workbook()
+    add_sheet(wb, "data", pd.DataFrame({"survey": ["Erhebung zu Konsum\x0b und Verhalten"]}))
+    assert wb["data"]["A2"].value == "Erhebung zu Konsum und Verhalten"
+
+
 def test_cli_page_export(tmp_path, capsys):
     site = tmp_path / "site"
     assert main(["page-export", "--plan", str(EXAMPLE_PLAN), "--site", str(site), "--note", "x"]) == 0

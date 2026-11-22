@@ -33,9 +33,9 @@ PAGE_SCHEMA_VERSION = "1.0"
 
 #: Run outputs published as they are (the page serves .csv, .json, .txt and .md only;
 #: the configuration goes as .txt). dataset.json duplicates dataset.csv and is left out.
+#: CSV files above MAX_CSV_PART_BYTES are published as parts the page joins back together.
+CSV_FILES = ("dataset.csv", "dataset_wide.csv")
 RUN_FILES = {
-    "dataset.csv": "dataset.csv",
-    "dataset_wide.csv": "dataset_wide.csv",
     "extraction_manifest.json": "extraction_manifest.json",
     "extraction_log.txt": "extraction_log.txt",
     "extraction_config.yaml": "extraction_config.yaml.txt",
@@ -47,6 +47,8 @@ XLSX_FILES = ("dataset.xlsx", "data_dictionary.xlsx")
 RAW_FILE = "raw_data.json"
 #: Published files must stay under 16 MB; raw responses are split into parts below this.
 MAX_PART_BYTES = 12_000_000
+#: Same limit for CSV files (dataset.csv, dataset_wide.csv, large workbook sheets).
+MAX_CSV_PART_BYTES = MAX_PART_BYTES
 #: Sheets with more cells than this are written as CSV beside the workbook description.
 INLINE_SHEET_CELLS = 20_000
 
@@ -358,11 +360,64 @@ def _export_workbook(path: Path, target: Path) -> str:
         csv_name = f"{path.stem}__{ws.title}.csv"
         with open(target / csv_name, "w", newline="", encoding="utf-8") as fh:
             csv.writer(fh).writerows(rows)
-        sheets.append({"name": ws.title, "csv": csv_name, "types": types})
+        parts = _split_csv(target / csv_name, target)
+        if parts == [csv_name]:
+            sheets.append({"name": ws.title, "csv": csv_name, "types": types})
+        else:
+            (target / csv_name).unlink()
+            sheets.append({"name": ws.title, "csv_parts": parts, "types": types})
     wb.close()
     spec = f"{path.name}.json"
     _write_json(target / spec, {"workbook": path.name, "sheets": sheets})
     return spec
+
+
+def _split_csv(path: Path, target: Path) -> List[str]:
+    """Publish a CSV as it is, or as parts below MAX_CSV_PART_BYTES when it is larger.
+
+    Each part repeats the header row; rows are never cut. Only the first part keeps
+    a byte-order mark, so that joining the parts (dropping the headers of parts 2+)
+    gives back the original file.
+    """
+    import csv
+    import io
+
+    if path.stat().st_size <= MAX_CSV_PART_BYTES:
+        if path.parent != target:
+            shutil.copy2(path, target / path.name)
+        return [path.name]
+    raw = path.read_bytes()
+    bom = raw.startswith(b"\xef\xbb\xbf")
+    text = raw[3:].decode("utf-8") if bom else raw.decode("utf-8")
+    reader = csv.reader(io.StringIO(text, newline=""))
+    header = next(reader)
+
+    def line(row: List[str]) -> bytes:
+        buf = io.StringIO()
+        csv.writer(buf, lineterminator="\r\n" if "\r\n" in text[:4096] else "\n").writerow(row)
+        return buf.getvalue().encode("utf-8")
+
+    head = line(header)
+    parts: List[str] = []
+    chunk: List[bytes] = []
+    size = len(head)
+
+    def flush() -> None:
+        name = f"{path.stem}.part{len(parts) + 1}.csv"
+        prefix = b"\xef\xbb\xbf" if bom and not parts else b""
+        (target / name).write_bytes(prefix + head + b"".join(chunk))
+        parts.append(name)
+
+    for row in reader:
+        b = line(row)
+        if len(head) + len(b) > MAX_CSV_PART_BYTES:
+            raise ValueError(f"one row of {path.name} is {len(b) / 1e6:.1f} MB: too large for the page")
+        if chunk and size + len(b) > MAX_CSV_PART_BYTES:
+            flush(); chunk, size = [], len(head)
+        chunk.append(b); size += len(b)
+    if chunk or not parts:
+        flush()
+    return parts
 
 
 def _split_raw(path: Path, target: Path) -> List[str]:
@@ -401,6 +456,12 @@ def export_run(run_dir: Union[str, Path], site: Union[str, Path], plan_id: Optio
         if (run_dir / name).exists():
             shutil.copy2(run_dir / name, target / published)
             files.append({"name": name, "bytes": (run_dir / name).stat().st_size, "path": published})
+    for name in CSV_FILES:
+        if (run_dir / name).exists():
+            parts = _split_csv(run_dir / name, target)
+            entry = {"name": name, "bytes": (run_dir / name).stat().st_size}
+            entry.update({"path": parts[0]} if parts == [name] else {"build": "join_csv", "parts": parts})
+            files.append(entry)
     for name in XLSX_FILES:
         if (run_dir / name).exists():
             files.append({"name": name, "bytes": (run_dir / name).stat().st_size, "build": "xlsx",

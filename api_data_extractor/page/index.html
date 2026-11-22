@@ -194,7 +194,12 @@ function copyText(text, host) {
 function loadScript(src) { return new Promise((ok, ko) => { if (document.querySelector(`script[src="${src}"]`) && window.XLSX) return ok(); const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("could not load " + src)); document.head.appendChild(s); }); }
 async function fetchOk(path) { const r = await fetch(path); if (!r.ok) throw new Error(path.split("/").pop() + ": HTTP " + r.status); return r; }
 /* Files the page cannot serve as they are: Excel workbooks are rebuilt from their exported sheets,
-   raw responses are joined from their parts. Everything else is sent as published. */
+   raw responses and large CSV files are joined from their parts. Everything else is sent as published. */
+async function joinCsv(base, parts) {
+  const texts = [];
+  for (const [i, part] of parts.entries()) { const t = await (await fetchOk(`${base}/${part}`)).text(); texts.push(i === 0 ? t : t.slice(t.indexOf("\n") + 1)); }
+  return texts.join("");
+}
 async function buildFile(base, f) {
   if (f.build === "xlsx") {
     await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
@@ -202,8 +207,8 @@ async function buildFile(base, f) {
     const wb = XLSX.utils.book_new();
     for (const sh of spec.sheets) {
       let rows = sh.rows;
-      if (sh.csv) {
-        const text = await (await fetchOk(`${base}/${sh.csv}`)).text();
+      if (sh.csv || sh.csv_parts) {
+        const text = sh.csv_parts ? await joinCsv(base, sh.csv_parts) : await (await fetchOk(`${base}/${sh.csv}`)).text();
         rows = Papa.parse(text, {skipEmptyLines: true}).data;
         rows = rows.map((r, i) => i === 0 ? r : r.map((v, c) => sh.types[c] === "n" && v !== "" ? Number(v) : v));
       }
@@ -211,6 +216,7 @@ async function buildFile(base, f) {
     }
     return new Blob([XLSX.write(wb, {type: "array", bookType: "xlsx", compression: true})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   }
+  if (f.build === "join_csv") return new Blob([await joinCsv(base, f.parts)], {type: "text/csv"});
   if (f.build === "join") {
     let all = [];
     for (const part of f.parts) all = all.concat(await (await fetchOk(`${base}/${part}`)).json());
@@ -492,7 +498,7 @@ function tabRuns(host) {
       <dt>Configuration</dt><dd class="mono">sha256 ${esc((s.config_sha256 || "").slice(0, 16))}</dd>
       <dt>Errors</dt><dd>${(s.errors || []).length ? s.errors.map(e => `<div class="muted">${esc(e.message || JSON.stringify(e))}</div>`).join("") : "None"}</dd>
       <dt>Warnings</dt><dd class="sub">${Object.entries(groups).map(([k, ws]) => `<div class="item"><b style="font-weight:500">${esc(label(k))}</b> <span class="hint">${ws.length}</span>${ws.slice(0, 4).map(w => `<div class="muted">${esc(w.message)}</div>`).join("")}</div>`).join("") || "None"}</dd>
-      <dt>Files</dt><dd class="sub">${s.files.map(f => `<div class="item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="mono">${esc(f.name)}</span><span class="hint">${(f.bytes / 1e6).toFixed(2)} MB</span><button class="btn" data-dl="${esc(f.name)}" title="${f.build === "xlsx" ? "Rebuilds the workbook from its sheets, then saves it" : f.build === "join" ? "Joins the raw responses from their parts, then saves them" : "Saves this file to your computer"}">Download</button></div>`).join("")}</dd></dl>
+      <dt>Files</dt><dd class="sub">${s.files.map(f => `<div class="item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="mono">${esc(f.name)}</span><span class="hint">${(f.bytes / 1e6).toFixed(2)} MB</span><button class="btn" data-dl="${esc(f.name)}" title="${f.build === "xlsx" ? "Rebuilds the workbook from its sheets, then saves it" : f.build === "join" ? "Joins the raw responses from their parts, then saves them" : f.build === "join_csv" ? "Joins the file from its parts, then saves it" : "Saves this file to your computer"}">Download</button></div>`).join("")}</dd></dl>
       <div><button class="btn" data-ask title="Copies a message asking Claude to go through this run's warnings with you">Discuss these warnings</button></div><div data-askx></div>`;
     d.querySelectorAll("[data-dl]").forEach(b => b.onclick = () => download(`data/${S.project}/runs/${id}`, s.files.find(f => f.name === b.dataset.dl), `${id}_${b.dataset.dl}`, b));
     $("[data-ask]", d).onclick = () => copyText(`/datafetcher ${S.project}: discuss the warnings of run ${id}`, $("[data-askx]", d));
@@ -605,7 +611,9 @@ function drawCoverage(s, names, cv) {
 function preview(host, sum) {
   if (!window.Papa) { host.innerHTML = `<div class="hint">The CSV reader did not load. Download dataset.csv from the Runs tab instead.</div>`; return; }
   host.innerHTML = `<span class="hint">Reading dataset.csv…</span>`;
-  Papa.parse(`data/${S.project}/runs/${sum.run_id}/dataset.csv`, {download: true, header: true, skipEmptyLines: true, complete: res => {
+  const base = `data/${S.project}/runs/${sum.run_id}`, f = sum.files.find(x => x.name === "dataset.csv") || {};
+  const src = f.build === "join_csv" ? joinCsv(base, f.parts) : Promise.resolve(`${base}/${f.path || "dataset.csv"}`);
+  src.then(input => Papa.parse(input, {download: f.build !== "join_csv", header: true, skipEmptyLines: true, complete: res => {
     const rows = res.data; const inds = [...new Set(rows.map(r => r.indicator_code))].sort(); const years = [...new Set(rows.map(r => r.year))].sort();
     host.innerHTML = `<div class="chips" style="margin:10px 0"><select id="pi" aria-label="Indicator"><option value="">All indicators</option>${inds.map(i => `<option>${esc(i)}</option>`).join("")}</select>
       <select id="py" aria-label="Year"><option value="">All years</option>${years.map(i => `<option>${esc(i)}</option>`).join("")}</select>
@@ -620,7 +628,8 @@ function preview(host, sum) {
           <td><a class="mono" href="${esc(r.source_url)}" target="_blank" rel="noopener" title="Opens the API request that returned this row">${esc(r.request_id)}</a></td></tr>`).join("")}</tbody></table>`;
     };
     ["#pi", "#py"].forEach(id => $(id, host).onchange = paint); $("#pc", host).oninput = paint; paint();
-  }, error: e => { host.innerHTML = `<div class="hint">Could not read dataset.csv (${esc(e.message || e)}).</div>`; }});
+  }, error: e => { host.innerHTML = `<div class="hint">Could not read dataset.csv (${esc(e.message || e)}).</div>`; }}),
+  e => { host.innerHTML = `<div class="hint">Could not read dataset.csv (${esc(e.message || e)}).</div>`; });
 }
 
 /* ---------- history ---------- */
