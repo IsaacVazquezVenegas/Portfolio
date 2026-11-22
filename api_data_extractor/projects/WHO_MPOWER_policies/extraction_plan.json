@@ -816,7 +816,10 @@
     "purpose": null
   },
   "approval": {
-    "status": "draft"
+    "status": "approved",
+    "approved_by": "Pedro",
+    "approved_on": "2026-11-22",
+    "notes": "Approved on the Data Fetcher page (plan sha256 a6c406673987)."
   },
   "indicator_mapping": [
     {
