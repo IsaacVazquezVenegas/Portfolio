@@ -29,6 +29,7 @@ data/projects.json                          one entry per project, newest first
 data/<plan_id>/plan.json                    the plan as written
 data/<plan_id>/meta.json                    fingerprint (sha256 without the approval block), warnings
 data/<plan_id>/history.json                 change log, newest first (actor: claude | engine)
+data/<plan_id>/extraction_config.yaml.txt   the configuration found beside the plan, if any
 data/<plan_id>/runs/<run_id>/summary.json   per-series coverage and distributions, files, warnings
 data/<plan_id>/runs/<run_id>/...            dataset.csv, dataset_wide.csv, manifest, log, README,
                                             extraction_config.yaml.txt, <workbook>.xlsx.json (+ sheet CSVs),

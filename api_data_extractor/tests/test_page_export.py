@@ -117,6 +117,13 @@ def test_export_plan_logs_changes_and_lists_projects(tmp_path):
     assert projects[0]["open_questions"] == 5
 
 
+def test_export_plan_keeps_the_configuration(tmp_path):
+    site = tmp_path / "site"
+    export_plan(PROJECT_PLAN, site)
+    copied = site / "data" / "WHO_MPOWER" / "extraction_config.yaml.txt"
+    assert copied.read_text(encoding="utf-8") == (PROJECT_PLAN.parent / "extraction_config.yaml").read_text(encoding="utf-8")
+
+
 # -- runs ----------------------------------------------------------------------
 
 COLUMNS = ["source_id", "indicator_code", "indicator_name", "category", "country_code", "country_name",

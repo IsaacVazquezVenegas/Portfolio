@@ -7,6 +7,7 @@ extraction projects. It reads plain files published beside it::
     data/<plan_id>/plan.json                 the extraction plan, as written
     data/<plan_id>/meta.json                 plan fingerprint, warnings, export time
     data/<plan_id>/history.json              every change to the plan, newest first
+    data/<plan_id>/extraction_config.yaml.txt  the configuration beside the plan, if any
     data/<plan_id>/runs/<run_id>/summary.json  coverage and distributions per series
     data/<plan_id>/runs/<run_id>/<outputs>   the run's files (Excel and raw data as parts the page reassembles)
 
@@ -223,6 +224,9 @@ def export_plan(plan_path: Union[str, Path], site: Union[str, Path], note: Optio
         "warnings": warnings,
     }
     _write_json(folder / "plan.json", data)
+    config = plan_path.parent / "extraction_config.yaml"
+    if config.exists():  # kept beside the plan so a later session can restore the project
+        shutil.copy2(config, folder / "extraction_config.yaml.txt")
     _write_json(folder / "meta.json", meta)
     _write_json(folder / "history.json", history)
 
