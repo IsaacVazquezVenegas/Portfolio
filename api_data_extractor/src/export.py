@@ -12,6 +12,7 @@ import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 EXCEL_MAX_CELL = 32767
 
@@ -30,6 +31,10 @@ def _cell(value: Any) -> Any:
         value = value.item()
     if isinstance(value, (dict, list)):
         value = json.dumps(value, ensure_ascii=False)
+    if isinstance(value, str):
+        # Control characters (e.g. in WHO survey titles) are not allowed in worksheets;
+        # the CSV and JSON outputs keep the text exactly as published.
+        value = ILLEGAL_CHARACTERS_RE.sub("", value)
     if isinstance(value, str) and len(value) > EXCEL_MAX_CELL:
         value = value[: EXCEL_MAX_CELL - 20] + " ...[truncated]"
     return value

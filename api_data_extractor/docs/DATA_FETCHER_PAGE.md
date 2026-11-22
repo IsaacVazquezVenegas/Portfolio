@@ -36,7 +36,7 @@ data/<plan_id>/runs/<run_id>/...            dataset.csv, dataset_wide.csv, manif
                                             raw_data.partN.json
 ```
 
-The page can serve only `.csv`, `.json`, `.txt` and `.md` files of at most 16 MB. Workbooks are therefore exported as their sheets and rebuilt in the browser on download; raw responses are split into parts of at most 12 MB and joined on download. A single raw response above 12 MB stops the export with an error.
+The page can serve only `.csv`, `.json`, `.txt` and `.md` files of at most 16 MB. Workbooks are therefore exported as their sheets and rebuilt in the browser on download; raw responses are split into parts of at most 12 MB and joined on download. CSV files above 12 MB (`dataset.csv`, `dataset_wide.csv`, large workbook sheets) are published as `<name>.partN.csv`, each with the header row, and the page joins them for the row preview and on download. A single raw response or CSV row above 12 MB stops the export with an error.
 
 ## Database
 

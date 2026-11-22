@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased — Large runs on the Data Fetcher page
+
+* `page-export` publishes CSV files above 12 MB (`dataset.csv`, `dataset_wide.csv`, large workbook sheets) as parts with the header repeated; the page joins them for the row preview and on download (`build: join_csv`, sheet `csv_parts`).
+* The Excel export drops control characters that worksheets cannot hold (found in a WHO survey title); CSV and JSON keep the text as published.
+
 ## Unreleased — Data Fetcher page
 
 * New page `page/index.html`, published as a private artifact: projects, Stage 1 register, plan with evidence, approval by the researcher, runs, data (coverage by country and year, distribution by year, row preview linked to source requests), history of changes. Light and dark themes.
