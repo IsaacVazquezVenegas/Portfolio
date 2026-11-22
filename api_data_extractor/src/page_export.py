@@ -40,6 +40,7 @@ RUN_FILES = {
     "extraction_log.txt": "extraction_log.txt",
     "extraction_config.yaml": "extraction_config.yaml.txt",
     "README.md": "README.md",
+    "extraction_plan.json": "extraction_plan.json",
 }
 #: Excel files cannot be served by the page: their sheets are exported as data and
 #: the page rebuilds the workbook on download.

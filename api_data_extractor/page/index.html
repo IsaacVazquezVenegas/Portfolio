@@ -142,6 +142,9 @@ canvas.cov { width: 100%; image-rendering: pixelated; border-radius: 4px; cursor
 table.prev { border-collapse: collapse; font-size: 12px; width: 100%; }
 table.prev th, table.prev td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 table.prev th { color: var(--fg-3); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.theme { margin-left: auto; align-self: center; }
+.pill.archived { color: var(--fg-3); border-style: dashed; }
+.row.is-archived > span { opacity: .6; }
 .toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 6px 14px; border-radius: 6px; font-size: 12.5px; z-index: 30; }
 @media (prefers-reduced-motion: no-preference) { .row, .chip, .btn { transition: background .12s, border-color .12s; } }
 </style>
@@ -166,6 +169,19 @@ const label = s => String(s ?? "").replace(/_/g, " ");
 const pill = (s, text) => `<span class="pill ${esc(s)}">${esc(text ?? label(s))}</span>`;
 const store = { get(k, d) { try { const v = localStorage.getItem("df:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
                 set(k, v) { try { localStorage.setItem("df:" + k, JSON.stringify(v)); } catch (e) {} } };
+/* ---------- theme (per viewer: Auto follows the system) ---------- */
+const THEMES = ["auto", "light", "dark"];
+function applyTheme(t) { if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", t); }
+applyTheme(store.get("theme", "auto"));
+function themeButton() {
+  const t = store.get("theme", "auto");
+  return `<button class="btn theme" id="themebtn" title="Switch between following your system setting (Auto), Light and Dark. Remembered in this browser.">Theme: ${t[0].toUpperCase() + t.slice(1)}</button>`;
+}
+function wireTheme() {
+  const b = $("#themebtn"); if (!b) return;
+  b.onclick = () => { const t = THEMES[(THEMES.indexOf(store.get("theme", "auto")) + 1) % THEMES.length]; store.set("theme", t); applyTheme(t); b.outerHTML = themeButton(); wireTheme(); if (S.project && S.tab === "data") renderTab(); };
+}
+
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
 async function getJSON(path) { const r = await fetch(path, {cache: "no-store"}); if (!r.ok) throw new Error(path + ": HTTP " + r.status); return r.json(); }
 const tip = $("#tip");
@@ -183,7 +199,7 @@ const capReady = (async () => {
 
 /* ---------- state ---------- */
 const S = { projects: [], project: null, plan: null, meta: null, history: [], tab: store.get("tab", "register"),
-            regFilter: "all", regSearch: "", open: new Set(), run: null, summary: null, approval: null, events: [], unsub: [] };
+            regFilter: "all", regSearch: "", open: new Set(), run: null, summary: null, approval: null, events: [], unsub: [], archive: {}, showArchived: false, showArchivedRuns: false };
 
 /* ---------- copy box (clipboard may be refused) ---------- */
 function copyText(text, host) {
@@ -192,8 +208,34 @@ function copyText(text, host) {
   try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
 }
 
+/* ---------- archive (shared database; hides, never deletes) ---------- */
+const archKey = (plan, run) => run ? `run:${plan}:${run}` : `project:${plan}`;
+const isArchived = (plan, run) => !!(S.archive[archKey(plan, run)] || {}).archived;
+const projectArchived = id => isArchived(id);
+const visibleRuns = () => S.runs.filter(r => S.showArchivedRuns || !isArchived(S.project, r.run_id));
+async function watchArchive() {
+  await capReady; if (!cap.db) return;
+  try {
+    cap.db.collection("archive").onSnapshot(snap => {
+      S.archive = {}; snap.docs.forEach(d => S.archive[d.id] = d.data());
+      if (!S.project) renderProjects(); else { renderBar(); if (["runs", "data"].includes(S.tab)) renderTab(); }
+    }, () => {});
+  } catch (e) {}
+}
+const canArchive = () => !!(cap.db && cap.canWrite);
+async function setArchived(plan, run, archived) {
+  if (!canArchive()) { toast("Only the page's owner can archive."); return; }
+  const at = new Date().toISOString(), by = cap.me?.name || "Researcher";
+  try {
+    await cap.db.doc("archive/" + archKey(plan, run)).set({kind: run ? "run" : "project", plan_id: plan, run_id: run || null, archived, by_id: cap.me?.id || null, by_name: by, at});
+    await cap.db.collection("events").add({plan_id: plan, run_id: run || null, kind: archived ? "archived" : "unarchived", plan_sha256: null, by_id: cap.me?.id || null, by_name: by, at, note: ""});
+    toast(archived ? (run ? "Run archived. Show it again with “Show archived”." : "Project archived, with its runs.") : "Restored.");
+  } catch (e) { toast("Not saved: " + (e.message || e.code)); }
+}
+
 /* ---------- downloads ---------- */
-function loadScript(src) { return new Promise((ok, ko) => { if (document.querySelector(`script[src="${src}"]`) && window.XLSX) return ok(); const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("could not load " + src)); document.head.appendChild(s); }); }
+const scripts = {};
+function loadScript(src) { return scripts[src] = scripts[src] || new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => { delete scripts[src]; ko(new Error("could not load " + src)); }; document.head.appendChild(s); }); }
 async function fetchOk(path) { const r = await fetch(path); if (!r.ok) throw new Error(path.split("/").pop() + ": HTTP " + r.status); return r; }
 /* Files the page cannot serve as they are: Excel workbooks are rebuilt from their exported sheets,
    raw responses and large CSV files are joined from their parts. Everything else is sent as published. */
@@ -235,8 +277,26 @@ async function download(base, f, filename, btn) {
   finally { if (btn) { btn.disabled = false; btn.textContent = was; } }
 }
 
+/* Bundles: every file as a single download gives it (parts joined, workbooks rebuilt), in one zip.
+   "Data only" leaves out the raw API responses, the largest file. */
+async function downloadZip(base, files, zipname, btn) {
+  await capReady;
+  if (!cap.downloads) { toast("Downloads are not available in this view. Open the page on claude.ai."); return; }
+  const was = btn.textContent; btn.disabled = true;
+  try {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");
+    const zip = new JSZip(); const folder = zip.folder(zipname.replace(/\.zip$/, ""));
+    for (const [i, f] of files.entries()) { btn.textContent = `Preparing ${i + 1}/${files.length}…`; folder.file(f.name, await buildFile(base, f)); }
+    btn.textContent = "Compressing…";
+    const blob = await zip.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 6}});
+    await cap.downloads.save({filename: zipname, data: blob});
+  } catch (e) { if (!(e && e.code === "declined")) toast("Download failed: " + (e.message || e.code || e)); }
+  finally { btn.disabled = false; btn.textContent = was; }
+}
+
 /* ---------- boot ---------- */
 async function boot() {
+  watchArchive();
   try { S.projects = await getJSON("data/projects.json"); } catch (e) { S.projects = []; }
   const last = store.get("project", null);
   const fromHash = decodeURIComponent((location.hash || "").slice(1));
@@ -246,8 +306,9 @@ async function boot() {
 
 function renderTop() {
   const top = $("#top");
-  if (!S.project) { top.innerHTML = `<h1>Data Fetcher</h1><span class="hint">Extraction projects run by the API engine. Start or continue one in Claude with <code>/datafetcher</code>.</span>`; return; }
-  top.innerHTML = `<button class="crumb" id="home" title="Back to the list of projects">Data Fetcher</button><span class="sep">/</span><h1 class="mono" style="font-size:15px">${esc(S.project)}</h1>`;
+  if (!S.project) { top.innerHTML = `<h1>Data Fetcher</h1><span class="hint">Extraction projects run by the API engine. Start or continue one in Claude with <code>/datafetcher</code>.</span>${themeButton()}`; wireTheme(); return; }
+  top.innerHTML = `<button class="crumb" id="home" title="Back to the list of projects">Data Fetcher</button><span class="sep">/</span><h1 class="mono" style="font-size:15px">${esc(S.project)}</h1>${projectArchived(S.project) ? pill("archived") : ""}${themeButton()}`;
+  wireTheme();
   $("#home").onclick = () => { S.project = null; history.replaceState(null, "", location.pathname + location.search); renderProjects(); };
 }
 
@@ -257,12 +318,17 @@ function renderProjects() {
   S.project = null; renderTop();
   const v = $("#view");
   if (!S.projects.length) { v.innerHTML = `<div class="empty">No projects yet.<br><span class="hint">In a Claude chat, type <code>/datafetcher</code> with your research question, a list of indicators or a file. The register, plan and data will appear here.</span></div>`; return; }
-  v.innerHTML = `<div class="list"><div class="list-head cols-proj"><span>Project</span><span>Objective</span><span>Plan</span><span>Register</span><span>Last run</span></div>
-    ${S.projects.map(p => { const run = (p.runs || [])[0]; const rc = p.register_counts || {}; const total = Object.values(rc).reduce((a, b) => a + b, 0);
-      return `<div class="row cols-proj" tabindex="0" role="button" data-id="${esc(p.id)}" title="Open ${esc(p.id)}">
-        <span class="mono">${esc(p.id)}</span><span class="muted">${esc(p.objective || "—")}</span><span>${pill(p.status)}</span>
+  const nArch = S.projects.filter(p => projectArchived(p.id)).length;
+  const shownP = S.projects.filter(p => S.showArchived || !projectArchived(p.id));
+  v.innerHTML = `${nArch ? `<div class="chips"><button class="chip" id="showarch" aria-pressed="${S.showArchived}" title="Archived projects are hidden, with their runs. Show them to open or restore one.">Show archived ${nArch}</button></div>` : ""}
+    <div class="list"><div class="list-head cols-proj"><span>Project</span><span>Objective</span><span>Plan</span><span>Register</span><span>Last run</span></div>
+    ${shownP.map(p => { const run = (p.runs || []).find(r => !isArchived(p.id, r.run_id)); const rc = p.register_counts || {}; const total = Object.values(rc).reduce((a, b) => a + b, 0);
+      const arch = projectArchived(p.id);
+      return `<div class="row cols-proj${arch ? " is-archived" : ""}" tabindex="0" role="button" data-id="${esc(p.id)}" title="Open ${esc(p.id)}">
+        <span class="mono">${esc(p.id)}${arch ? " " + pill("archived") : ""}</span><span class="muted">${esc(p.objective || "—")}</span><span>${pill(p.status)}</span>
         <span class="muted">${total ? `${total} rows · ${rc.clear || 0} clear${p.open_questions ? ` · ${p.open_questions} open question${p.open_questions > 1 ? "s" : ""}` : ""}` : "—"}</span>
-        <span class="muted">${run ? `${fmtD(run.finished_at)} · ${fmtN(run.rows)} rows` : "none yet"}</span></div>`; }).join("")}</div>`;
+        <span class="muted">${run ? `${fmtD(run.finished_at)} · ${fmtN(run.rows)} rows` : "none yet"}</span></div>`; }).join("") || `<div class="empty" style="border:0">All projects are archived.</div>`}</div>`;
+  if ($("#showarch")) $("#showarch").onclick = () => { S.showArchived = !S.showArchived; renderProjects(); };
   v.querySelectorAll(".row").forEach(r => { const go = () => openProject(r.dataset.id); r.onclick = go; r.onkeydown = e => { if (e.key === "Enter") go(); }; });
 }
 
@@ -307,7 +373,7 @@ function renderBar() {
   if (st === "scoping") blockers.push("The plan is still at Stage 1 (scoping). Claude completes Stages 2 to 5 before it can be approved.");
   (plan.outstanding_decisions || []).length && blockers.push(`${plan.outstanding_decisions.length} outstanding decision(s) must be settled in the chat first.`);
   const canApprove = cap.db && cap.canWrite && st === "draft" && !blockers.length && ap.kind !== "pending";
-  const lastRun = S.runs[0];
+  const lastRun = S.runs.find(r => !isArchived(S.project, r.run_id));
   bar.innerHTML = `
     <div class="grow"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(st, "plan: " + label(st))}
       <span class="mono hint" title="Fingerprint of the plan's content. An approval applies to this exact version.">sha ${esc(sha.slice(0, 12))}</span>
@@ -320,6 +386,7 @@ function renderBar() {
       ${ap.kind === "pending" ? `<button class="btn" id="withdraw" title="Cancels your approval before Claude records it in the plan.">Withdraw approval</button>` : ""}
       <button class="btn" id="askrun" title="Copies a message asking Claude to run the extraction with the approved plan.">Copy run request</button>
       <button class="btn" id="askcont" title="Copies a message that reopens this project in the chat.">Continue in chat</button>
+      <button class="btn" id="archproj" ${canArchive() ? "" : "disabled"} title="${projectArchived(S.project) ? "Shows this project and its runs in the list again." : "Hides this project and its runs from the list. Nothing is deleted; restore it from “Show archived”."}">${projectArchived(S.project) ? "Unarchive project" : "Archive project"}</button>
     </div>
     <div id="barx" style="flex-basis:100%" hidden></div>`;
   const x = $("#barx");
@@ -349,6 +416,7 @@ function renderBar() {
       toast("Approval withdrawn.");
     } catch (e) { toast("Not saved: " + (e.message || e.code)); }
   };
+  $("#archproj").onclick = () => setArchived(S.project, null, !projectArchived(S.project));
   $("#askrun").onclick = () => { x.hidden = false; copyText(`/datafetcher run ${S.project}`, x); };
   $("#askcont").onclick = () => { x.hidden = false; copyText(`/datafetcher ${S.project}: `, x); };
 }
@@ -357,7 +425,7 @@ function renderBar() {
 function renderProject() {
   const plan = S.plan; const reg = plan.scoping?.requirements_register || [];
   const nHist = (S.history || []).length;
-  const tabs = [["register", "Register", reg.length], ["plan", "Plan", (plan.indicator_mapping || []).length], ["runs", "Runs", S.runs.length], ["data", "Data", null], ["history", "History", nHist]];
+  const tabs = [["register", "Register", reg.length], ["plan", "Plan", (plan.indicator_mapping || []).length], ["runs", "Runs", S.runs.filter(r => !isArchived(S.project, r.run_id)).length], ["data", "Data", null], ["history", "History", nHist]];
   $("#view").innerHTML = `<div class="panel"><div class="bar" id="bar"></div>
     <div class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${S.tab === k}">${l}${n != null ? `<span class="n">${n}</span>` : ""}</button>`).join("")}</div>
     <div id="tabview" class="panel"></div></div>`;
@@ -488,9 +556,12 @@ async function loadSummary(runId) {
 }
 function tabRuns(host) {
   if (!S.runs.length) { host.innerHTML = `<div class="empty">No run yet.<br><span class="hint">Approve the plan, then press “Copy run request” and paste it in the chat. Each run's status, warnings and files appear here.</span></div>`; return; }
-  host.innerHTML = `<div class="list"><div class="list-head cols-run"><span>Run</span><span>Finished</span><span>Status</span><span>Rows</span></div>
-    ${S.runs.map(r => `<div class="row cols-run" tabindex="0" data-key="run:${esc(r.run_id)}"><span class="mono">${esc(r.run_id)}</span><span class="muted">${fmtT(r.finished_at)}</span><span>${pill(r.status)}${r.test_run ? " " + pill("test", "test run") : ""}</span><span class="mono">${fmtN(r.rows)}</span></div>`).join("")}</div>
+  const nArch = S.runs.filter(r => isArchived(S.project, r.run_id)).length;
+  host.innerHTML = `${nArch ? `<div class="chips"><button class="chip" id="showarchr" aria-pressed="${S.showArchivedRuns}" title="Archived runs are hidden here and in the Data tab. Show them to open or restore one.">Show archived ${nArch}</button></div>` : ""}
+    <div class="list"><div class="list-head cols-run"><span>Run</span><span>Finished</span><span>Status</span><span>Rows</span></div>
+    ${visibleRuns().map(r => `<div class="row cols-run${isArchived(S.project, r.run_id) ? " is-archived" : ""}" tabindex="0" data-key="run:${esc(r.run_id)}"><span class="mono">${esc(r.run_id)}${isArchived(S.project, r.run_id) ? " " + pill("archived") : ""}</span><span class="muted">${fmtT(r.finished_at)}</span><span>${pill(r.status)}${r.test_run ? " " + pill("test", "test run") : ""}</span><span class="mono">${fmtN(r.rows)}</span></div>`).join("") || `<div class="empty" style="border:0">All runs are archived.</div>`}</div>
     <span class="hint">A test run uses a plan that was not approved. Its data are for checking only.</span>`;
+  if ($("#showarchr", host)) $("#showarchr", host).onclick = () => { S.showArchivedRuns = !S.showArchivedRuns; tabRuns(host); };
   toggleRows(host, async (key, d) => {
     const id = key.slice(4); d.innerHTML = `<span class="hint">Loading…</span>`;
     let s; try { s = await loadSummary(id); } catch (e) { d.innerHTML = `<span class="hint">Summary not found (${esc(e.message)}).</span>`; return; }
@@ -501,7 +572,13 @@ function tabRuns(host) {
       <dt>Errors</dt><dd>${(s.errors || []).length ? s.errors.map(e => `<div class="muted">${esc(e.message || JSON.stringify(e))}</div>`).join("") : "None"}</dd>
       <dt>Warnings</dt><dd class="sub">${Object.entries(groups).map(([k, ws]) => `<div class="item"><b style="font-weight:500">${esc(label(k))}</b> <span class="hint">${ws.length}</span>${ws.slice(0, 4).map(w => `<div class="muted">${esc(w.message)}</div>`).join("")}</div>`).join("") || "None"}</dd>
       <dt>Files</dt><dd class="sub">${s.files.map(f => `<div class="item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="mono">${esc(f.name)}</span><span class="hint">${(f.bytes / 1e6).toFixed(2)} MB</span><button class="btn" data-dl="${esc(f.name)}" title="${f.build === "xlsx" ? "Rebuilds the workbook from its sheets, then saves it" : f.build === "join" ? "Joins the raw responses from their parts, then saves them" : f.build === "join_csv" ? "Joins the file from its parts, then saves it" : "Saves this file to your computer"}">Download</button></div>`).join("")}</dd></dl>
-      <div><button class="btn" data-ask title="Copies a message asking Claude to go through this run's warnings with you">Discuss these warnings</button></div><div data-askx></div>`;
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" data-zip="all" title="One zip with every file above, as single downloads give them (${(s.files.reduce((a, f) => a + (f.bytes || 0), 0) / 1e6).toFixed(0)} MB before compression). Takes a few seconds for large runs.">Download all (zip)</button>
+        <button class="btn" data-zip="data" title="The same zip without the raw API responses (raw_data.json): data, workbooks, dictionary, plan, configuration, log and manifest.">Data only (zip)</button>
+        <button class="btn" data-ask title="Copies a message asking Claude to go through this run's warnings with you">Discuss these warnings</button>
+        <button class="btn" data-arch ${canArchive() ? "" : "disabled"} title="${isArchived(S.project, id) ? "Shows this run again in the Runs and Data tabs." : "Hides this run from the Runs and Data tabs. Nothing is deleted."}">${isArchived(S.project, id) ? "Unarchive run" : "Archive run"}</button></div><div data-askx></div>`;
+    d.querySelectorAll("[data-zip]").forEach(b => b.onclick = () => { const all = b.dataset.zip === "all"; downloadZip(`data/${S.project}/runs/${id}`, s.files.filter(f => all || !/^raw_data/.test(f.name)), `${id}${all ? "" : "_data"}.zip`, b); });
+    $("[data-arch]", d).onclick = () => setArchived(S.project, id, !isArchived(S.project, id));
     d.querySelectorAll("[data-dl]").forEach(b => b.onclick = () => download(`data/${S.project}/runs/${id}`, s.files.find(f => f.name === b.dataset.dl), `${id}_${b.dataset.dl}`, b));
     $("[data-ask]", d).onclick = () => copyText(`/datafetcher ${S.project}: discuss the warnings of run ${id}`, $("[data-askx]", d));
   });
@@ -534,9 +611,10 @@ const VIEWS = [["series", "Series", "Each series with its coverage and a chart s
 const V = { run: null, index: null, cells: {}, spec: null, view: null, year: null, group: null, key: null, country: null, q: "" };
 
 function tabData(host) {
-  if (!S.runs.length) { host.innerHTML = `<div class="empty">No data yet.<br><span class="hint">After the first run, this tab shows the data by year, by indicator and by country, with charts suited to each series.</span></div>`; return; }
-  const runId = S.run || S.runs[0].run_id;
-  host.innerHTML = `<div class="chips"><label class="hint" for="runsel">Run</label><select id="runsel" title="Which run's data to show">${S.runs.map(r => `<option value="${esc(r.run_id)}" ${r.run_id === runId ? "selected" : ""}>${esc(r.run_id)}${r.test_run ? " (test)" : ""}</option>`).join("")}</select>
+  const runsD = S.runs.filter(r => !isArchived(S.project, r.run_id));
+  if (!runsD.length) { host.innerHTML = S.runs.length ? `<div class="empty">All runs are archived.<br><span class="hint">Restore one in the Runs tab (Show archived, then Unarchive run).</span></div>` : `<div class="empty">No data yet.<br><span class="hint">After the first run, this tab shows the data by year, by indicator and by country, with charts suited to each series.</span></div>`; return; }
+  const runId = runsD.some(r => r.run_id === S.run) ? S.run : runsD[0].run_id;
+  host.innerHTML = `<div class="chips"><label class="hint" for="runsel">Run</label><select id="runsel" title="Which run's data to show">${runsD.map(r => `<option value="${esc(r.run_id)}" ${r.run_id === runId ? "selected" : ""}>${esc(r.run_id)}${r.test_run ? " (test)" : ""}</option>`).join("")}</select>
     <span id="viewchips" class="chips"></span>
     <button class="btn" id="redo" style="margin-left:auto" title="Copies a request asking Claude to look at this run's data and set better views and charts. Use it when the automatic choice is not helpful.">Redo the views with Claude</button></div>
     <div id="redox"></div><div id="dataview"><span class="hint">Loading…</span></div>`;
@@ -833,7 +911,7 @@ function preview(host, sum) {
 /* ---------- history ---------- */
 function tabHistory(host) {
   const entries = [...(S.history || []).map((h, i) => ({...h, key: "h" + i})),
-    ...S.events.map(e => ({at: e.at, actor: "you", note: e.kind === "approved" ? `Approved version ${String(e.plan_sha256 || "").slice(0, 12)}${e.note ? ": " + e.note : ""}` : e.kind === "withdrawn" ? "Withdrew the approval" : e.kind, by: e.by_name, changes: [], key: "e" + e.id}))]
+    ...S.events.map(e => ({at: e.at, actor: "you", note: e.kind === "approved" ? `Approved version ${String(e.plan_sha256 || "").slice(0, 12)}${e.note ? ": " + e.note : ""}` : e.kind === "withdrawn" ? "Withdrew the approval" : e.kind === "archived" || e.kind === "unarchived" ? `${e.kind === "archived" ? "Archived" : "Restored"} ${e.run_id ? "run " + e.run_id : "the project"}` : e.kind, by: e.by_name, changes: [], key: "e" + e.id}))]
     .sort((a, b) => String(b.at).localeCompare(String(a.at)));
   if (!entries.length) { host.innerHTML = `<div class="empty">No changes recorded yet.</div>`; return; }
   host.innerHTML = `<div class="list"><div class="list-head cols-hist"><span>When</span><span>Who</span><span>What</span><span>Changes</span></div>
