@@ -1,0 +1,14 @@
+{
+ "value": [
+  {
+   "Code": "SEX_FMLE",
+   "Title": "Female",
+   "Dimension": "SEX"
+  },
+  {
+   "Code": "SEX_MLE",
+   "Title": "Male",
+   "Dimension": "SEX"
+  }
+ ]
+}

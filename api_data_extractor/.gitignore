@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Secrets – never commit credentials
+.env
+
+# Extraction outputs (reproducible from the configuration)
+projects/*/output/*
+!projects/*/output/.gitkeep
+output/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

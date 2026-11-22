@@ -1,0 +1,114 @@
+# Annotated template / cross-source example.
+#
+# Two independent sources with dedicated connectors, harmonised to ISO3
+# country codes, to show that the engine is not WHO-specific.
+# See docs/CONFIGURATION_REFERENCE.md for every option.
+#
+#   python -m src.main validate --config config/extraction_config.yaml
+#   python -m src.main run      --config config/extraction_config.yaml
+schema_version: "1.0"
+
+# A. Project identification ------------------------------------------------
+project:
+  name: CROSS_SOURCE_TOBACCO
+  description: >-
+    Daily smoking by educational attainment (Eurostat EHIS) and current tobacco
+    use prevalence (World Bank WDI) for four EU countries.
+  version: "1.0.0"
+  created: 2026-11-19
+  # extraction_plan: extraction_plan.json   # link the approved plan here
+
+# B. Data sources ------------------------------------------------------------
+sources:
+  - id: eurostat
+    provider: Eurostat
+    api_name: Statistics API 1.0 (JSON-stat 2.0)
+    api_type: json-stat
+    connector: eurostat
+    base_url: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0
+    documentation_url: https://wikis.ec.europa.eu/display/EUROSTATHELP/API+Statistics+-+data+query
+    authentication:
+      method: none
+    request:
+      timeout_seconds: 60
+      max_retries: 3
+      min_interval_seconds: 1
+
+  - id: world_bank
+    provider: World Bank
+    api_name: World Development Indicators API v2
+    api_type: rest
+    connector: world_bank
+    base_url: https://api.worldbank.org/v2
+    documentation_url: https://datahelpdesk.worldbank.org/knowledgebase/articles/889392
+    # Example of an authenticated source (not needed for the World Bank):
+    # authentication:
+    #   method: api_key_header     # none | api_key_header | api_key_query | bearer_token
+    #   env_var: EXAMPLE_API_KEY   # name of the environment variable, never the key itself
+    #   param_name: X-API-Key
+
+# C. Extraction parameters ---------------------------------------------------------
+extractions:
+  - id: ehis_smoking
+    source: eurostat
+    countries: [DE, EL, FR, IT]       # Eurostat geo codes (EL = Greece)
+    start_year: 2014
+    end_year: 2019
+    frequency: annual
+    filters:                           # Eurostat dimension codes
+      unit: PC
+      sex: T
+      age: TOTAL
+    indicators:
+      - code: hlth_ehis_sk1e
+        name: Smoking of tobacco products by sex, age and educational attainment level
+        definition: Share of the population aged 15+ by smoking behaviour (EHIS waves 2 and 3).
+        unit: Percentage
+        measurement_scale: ratio
+        category: Smoking behaviour
+        filters:
+          smoking: SM_DAY
+          isced11: [ED0-2, ED3_4, ED5-8]
+
+  - id: wdi_prevalence
+    source: world_bank
+    countries: [DEU, GRC, FRA, ITA]
+    start_year: 2014
+    end_year: 2020
+    indicators:
+      - code: SH.PRV.SMOK
+        name: Prevalence of current tobacco use (% of adults)
+        unit: "% of adults"
+        measurement_scale: ratio
+        category: Tobacco use
+
+# D. Processing ------------------------------------------------------------------
+processing:
+  country_codes: iso3
+  numeric_values: source_numeric_only
+  standardise_periods: true
+  missing_values:
+    treatment: keep
+    markers: []
+  deduplicate: true
+  wide_panel: true
+
+# E. Validation --------------------------------------------------------------------
+validation:
+  expected_countries: [DEU, GRC, FRA, ITA]   # compared after harmonisation
+  check_duplicates: true
+  check_missing: true
+  check_units: true
+  check_indicator_definitions: true
+  check_coverage: true
+  max_missing_share: 0.5
+  fail_on_request_error: false
+
+# F. Output --------------------------------------------------------------------------
+output:
+  directory: ../projects/CROSS_SOURCE_TOBACCO/output
+  folder_name: "{project}_{timestamp}"
+  overwrite: false
+  formats: [csv, xlsx]
+  data_dictionary: true
+  readme: true
