@@ -1,0 +1,2296 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "WHO_MPOWER_policies",
+  "created": "2026-11-19",
+  "prepared_by": "LLM (Claude, following LLM_DATA_EXTRACTION_PROTOCOL.md) with the researcher",
+  "scoping": {
+    "starting_point": "B",
+    "inputs": [
+      {
+        "form": "table",
+        "description": "Pasted table with three columns: Component (P/O/W/E), Policy and Interventions"
+      },
+      {
+        "form": "text",
+        "description": "Chat answers of 2026-11-22: year 2024 then 2022 and 2024; EU and OECD countries only; fetch all MPOWER indicators; asked for the summary indicator of each dimension"
+      }
+    ],
+    "scope": {
+      "countries": {
+        "value": "EU and OECD countries: 43 (EU27 and OECD38, 22 in both)",
+        "origin": "stated"
+      },
+      "period": {
+        "value": "MPOWER report years 2022 and 2024",
+        "origin": "stated"
+      },
+      "breakdown": {
+        "value": "National level; by sex or product where the WHO table has that dimension",
+        "origin": "default"
+      },
+      "outputs": {
+        "value": "Long CSV + Excel + country-year panel",
+        "origin": "default"
+      }
+    },
+    "retrieval_strategy": "Retrieve everything MPOWER publishes for the 43 countries: all 33 TOBACCO_MPOWER_* tables (overview with the seven _Group composites, every component table of M, P, O, W, E and R, and NTCP), plus the 22 compliance scores published only as single indicators (P_compl_*, E_compl_*, last value 2022). One request per table, filtered on the 43 countries and 2022-2024 (about 25,000 rows). Composites and compliance scores are retrieved as published and never recomputed.",
+    "requirements_register": [
+      {
+        "id": "R1",
+        "user_wording": "Smoke and vaping free air laws / Comprehensive smoke-free law",
+        "group": "P",
+        "interpreted_concept": "National smoke-free legislation by type of place",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "P_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "8 place types"
+          },
+          {
+            "code": "TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "number of places, fines, enforcement"
+          }
+        ],
+        "status": "clear",
+        "questions": [
+          "Q2"
+        ],
+        "origin": "stated",
+        "reason": "Vaping in smoke-free laws is not covered by MPOWER P; parked as R20 (Q2 default)."
+      },
+      {
+        "id": "R2",
+        "user_wording": "Bans in public places / \"Model P together?\"",
+        "group": "P",
+        "interpreted_concept": "Same legislation, by place",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "same bundles as R1, no extra request"
+          },
+          {
+            "code": "P_compl_all_sfe",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "compliance scores P_compl_all_sfe and P_compl_p1 to P_compl_p8; latest value 2022"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R3",
+        "user_wording": "Eliminate second-hand exposure",
+        "group": "P",
+        "interpreted_concept": "Population exposure to second-hand smoke (an outcome, not a policy)",
+        "kind_of_data": [
+          "outcome"
+        ],
+        "candidates": [
+          {
+            "code": "SHS_2",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "women 15+"
+          },
+          {
+            "code": "SHS_3",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "men 15+"
+          },
+          {
+            "code": "SHS_1",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "children under 15; burden in SHS_4 to SHS_11"
+          }
+        ],
+        "status": "parked",
+        "origin": "stated",
+        "reason": "No country data in GHO: SHS_1 to SHS_11 cover only WHO regions in 2004, and TOBACCO_0000000346 returns no data (checked 2026-11-22). Candidate sources: GYTS and GATS country reports."
+      },
+      {
+        "id": "R4",
+        "user_wording": "Smoke-free home with kids",
+        "group": "P",
+        "interpreted_concept": "Children's exposure at home (no MPOWER law covers private homes)",
+        "kind_of_data": [
+          "outcome"
+        ],
+        "candidates": [
+          {
+            "code": "SHS_1",
+            "level": "single",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_0000000346",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "youth survey: exposure at home"
+          }
+        ],
+        "status": "parked",
+        "origin": "stated",
+        "reason": "No country data in GHO: SHS_1 to SHS_11 cover only WHO regions in 2004, and TOBACCO_0000000346 returns no data (checked 2026-11-22). Candidate sources: GYTS and GATS country reports."
+      },
+      {
+        "id": "R5",
+        "user_wording": "Pharmaceutical cessation aid: Varenicline",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Varen_sold/_where/_ins"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R6",
+        "user_wording": "Pharmaceutical cessation aid: Cytisine",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Cytisine_sold/_where/_ins"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R7",
+        "user_wording": "Pharmaceutical cessation aid: NRT",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage, Essential Medicines List",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_NRT_sold/_where/_ins/_EML"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R8",
+        "user_wording": "Pharmaceutical cessation aid: Combination NRT",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "parked",
+        "reason": "Effect sizes, separate literature task (Q1 default).",
+        "questions": [
+          "Q1"
+        ],
+        "origin": "stated"
+      },
+      {
+        "id": "R9",
+        "user_wording": "Pharmaceutical cessation aid: Nicotine patch alone",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "parked",
+        "reason": "Effect sizes, separate literature task (Q1 default).",
+        "questions": [
+          "Q1"
+        ],
+        "origin": "stated"
+      },
+      {
+        "id": "R10",
+        "user_wording": "Pharmaceutical cessation aid: Fast-acting NRT alone",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "parked",
+        "reason": "Effect sizes, separate literature task (Q1 default).",
+        "questions": [
+          "Q1"
+        ],
+        "origin": "stated"
+      },
+      {
+        "id": "R11",
+        "user_wording": "Pharmaceutical cessation aid: Bupropion",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Bup_sold/_where/_ins"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R12",
+        "user_wording": "National cessation support integrated into primary care / Counselling",
+        "group": "O",
+        "interpreted_concept": "Availability and cost coverage of tobacco-dependence treatment by setting",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O1_TREATMENTSUPPORT",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Avail_hlth_clin, O_Ins_hlth_clin, hospitals, community..."
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R13",
+        "user_wording": "National free quit lines",
+        "group": "O",
+        "interpreted_concept": "Toll-free quit line",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O1_TREATMENTSUPPORT",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Quitline"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W2A_CIGARETTES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "W25_quitline_number_A, quit-line number on packs"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R14",
+        "user_wording": "Workplace cessation",
+        "group": "O",
+        "interpreted_concept": "Cessation programmes at workplaces",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [],
+        "status": "parked",
+        "reason": "No GHO indicator (only smoke-free workplaces, P5_indoor_off, in P1). Parked (Q3 default).",
+        "questions": [
+          "Q3"
+        ],
+        "origin": "stated"
+      },
+      {
+        "id": "R15",
+        "user_wording": "Health warnings on tobacco packaging",
+        "group": "W",
+        "interpreted_concept": "Warning law, size, graphics, rotation...",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "W_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W1A_CIGARETTES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "with W1B (other smoked) and W1C (smokeless)"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R16",
+        "user_wording": "Plain packaging",
+        "group": "W",
+        "interpreted_concept": "Mandatory plain packaging",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_W2A_CIGARETTES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "contains W26_plain_packaging_S"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W2B_TOBACCOSMOKED",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "contains W26_plain_packaging_D"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W2C_TOBACCOSMOKELESS",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "contains W26_plain_packaging_S"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R17",
+        "user_wording": "Anti-tobacco mass media campaigns",
+        "group": "W",
+        "interpreted_concept": "National campaigns and their characteristics",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "W-MM_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W3_MASSMEDIA",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "Camp_* questions, from 2010"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R18",
+        "user_wording": "Comprehensive bans on advertising, promotion and sponsorship (TAPS, partial, full)",
+        "group": "E",
+        "interpreted_concept": "Direct and indirect advertising bans, compliance",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "E_Group",
+            "level": "composite",
+            "source": "WHO GHO",
+            "note": "'partial/full' is encoded in the E_Group levels; never recomputed"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E1_DIRECTADBANS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E2_INDIRECTADBANS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "E_compl_all_dir",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "compliance scores E_compl_*, 2022; in 2024 inside E1 and E2"
+          }
+        ],
+        "status": "clear",
+        "origin": "stated"
+      },
+      {
+        "id": "R19",
+        "user_wording": "School tobacco",
+        "interpreted_concept": "Smoke-free education facilities (reading (a), Q4 default)",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "P2_education"
+          },
+          {
+            "code": "P_compl_p2",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "compliance, 2022"
+          }
+        ],
+        "status": "clear",
+        "questions": [
+          "Q4"
+        ],
+        "origin": "stated",
+        "reason": "Reading (b), youth tobacco use: Yth_curr_tob_use covers only 3 of the 43 countries in 2022-2024 (checked 2026-11-22), so it is left out. Reading (c), school programmes: not in GHO."
+      },
+      {
+        "id": "R20",
+        "user_wording": "Smoke and vaping free air laws",
+        "group": "P",
+        "interpreted_concept": "Inclusion of e-cigarettes in smoke-free legislation",
+        "kind_of_data": [
+          "policy"
+        ],
+        "origin": "stated",
+        "candidates": [],
+        "status": "parked",
+        "reason": "Not in MPOWER P. Candidate source: e-cigarette regulation tables of the WHO report on the global tobacco epidemic (Q2 default).",
+        "questions": [
+          "Q2"
+        ]
+      },
+      {
+        "id": "R21",
+        "user_wording": "fetch all of the MPOWER indicators",
+        "group": "M, R, NTCP",
+        "interpreted_concept": "MPOWER tables not touched by the original list: Monitor (surveys, prevalence), Raise taxes (tax, price, affordability, revenue), national tobacco control programme",
+        "kind_of_data": [
+          "policy",
+          "outcome",
+          "price_tax"
+        ],
+        "origin": "stated",
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_M1_PREVALENCE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M1_TOBACCOUSESMOKING",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M2_PREVALENCE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M2_SMOKELESSECIGARETTES",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M3_PREVALENCE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M3_TOBACCOUSESMOKINGSCHOOL",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M4_PREVALENCE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_M4_SMOKELESSECIGARETTESSCHOOL",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_NTCP",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_AFFORDABILITY",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_EARMARKED",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_INFLATIONADJUSTEDPRICES",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_PRICE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_TAX",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_TAXADMINISTRATION",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_TAXREVENUELATEST",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_TAXREVENUEPREVIOUS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_R_TAXSTRUCTURE",
+            "level": "bundle",
+            "source": "WHO GHO"
+          }
+        ],
+        "status": "clear",
+        "questions": [
+          "Q5"
+        ]
+      },
+      {
+        "id": "R22",
+        "user_wording": "at least one indicator that summarises how compliant is the country with that dimension",
+        "group": "All",
+        "interpreted_concept": "Summary per dimension: WHO composite level (1-5) and, where published, compliance score (0-10)",
+        "kind_of_data": [
+          "composite_index"
+        ],
+        "origin": "stated",
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_OVERVIEW",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "the seven _Group composites; the only source of 2024 levels"
+          },
+          {
+            "code": "P_compl_all_sfe",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "2022"
+          },
+          {
+            "code": "E_compl_all_dir",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "2022; 2024 inside E1"
+          },
+          {
+            "code": "E_compl_e_all_indir",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "2022; 2024 inside E2"
+          }
+        ],
+        "status": "clear",
+        "reason": "Compliance scores exist only for P and E; O, W, W-MM and R have only the composite level."
+      },
+      {
+        "id": "R23",
+        "interpreted_concept": "Context: age-standardised current tobacco use prevalence, by sex",
+        "kind_of_data": [
+          "outcome"
+        ],
+        "origin": "assumed",
+        "candidates": [
+          {
+            "code": "M_Est_tob_curr_std",
+            "level": "single",
+            "source": "WHO GHO"
+          }
+        ],
+        "status": "clear",
+        "questions": [
+          "Q7"
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "id": "Q1",
+        "round": 1,
+        "text": "Combination NRT, patch alone and fast-acting NRT look like inputs for an effect model. Do you need intervention effect sizes? Those come from trials and reviews (e.g. Cochrane), not from WHO monitoring data.",
+        "default": "Retrieve country policy data only; R8-R10 parked as 'effect sizes, separate literature task'.",
+        "rows": [
+          "R8",
+          "R9",
+          "R10"
+        ],
+        "status": "default_applied"
+      },
+      {
+        "id": "Q2",
+        "round": 1,
+        "text": "MPOWER P covers smoking only. Should we look for a separate WHO source on e-cigarette regulation in Stage 2?",
+        "default": "Smoking only for now; vaping regulation listed for Stage 2.",
+        "rows": [
+          "R1"
+        ],
+        "status": "default_applied"
+      },
+      {
+        "id": "Q3",
+        "round": 1,
+        "text": "No GHO indicator exists for workplace cessation. Drop it, or look for another source?",
+        "default": "Park.",
+        "rows": [
+          "R14"
+        ],
+        "status": "default_applied"
+      },
+      {
+        "id": "Q4",
+        "round": 1,
+        "text": "By 'school tobacco', do you mean (a) smoke-free school law, (b) youth tobacco use, or (c) school prevention programmes?",
+        "default": "(a) + (b).",
+        "rows": [
+          "R19"
+        ],
+        "status": "default_applied"
+      },
+      {
+        "id": "Q5",
+        "round": 1,
+        "text": "M and R are not in your list. Retrieve only their composite scores (they come free with the overview table), or also their bundles?",
+        "default": "Composites only.",
+        "status": "answered",
+        "answer": "fetch all of the MPOWER indicators, for OECD and EU countries",
+        "rows": [
+          "R21"
+        ]
+      },
+      {
+        "id": "Q6",
+        "round": 2,
+        "text": "Coverage: all 195 countries and report years 2007-2024?",
+        "default": "Yes",
+        "rows": [],
+        "status": "answered",
+        "answer": "Year must be 2024, only EU and OECD countries. / We include 2022 too, as well."
+      },
+      {
+        "id": "Q7",
+        "round": 2,
+        "text": "Include age-standardised current tobacco use prevalence by sex (M_Est_tob_curr_std) as context?",
+        "default": "Yes",
+        "rows": [
+          "R23"
+        ],
+        "status": "default_applied"
+      },
+      {
+        "id": "Q8",
+        "round": 3,
+        "text": "For P, use P_compl_all_sfe (2022) as the only compliance score available?",
+        "default": "Yes, flagged as a 2022 value",
+        "rows": [
+          "R2",
+          "R22"
+        ],
+        "status": "answered",
+        "answer": "We include 2022 too, as well."
+      }
+    ],
+    "catalogue_lookups": [
+      {
+        "query": "https://ghoapi.azureedge.net/api/Indicator",
+        "performed_on": "2026-11-19",
+        "result": "Full GHO indicator list"
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/DIMENSION/TOBACCO_INDICATOR/DimensionValues",
+        "performed_on": "2026-11-19",
+        "result": "The 264 MPOWER component questions"
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_<bundle>?$filter=SpatialDim eq 'FRA'",
+        "performed_on": "2026-11-19",
+        "result": "One row per country x report year x question (Dim1 = TOBACCO_INDICATOR_<question>); report years 2007-2024",
+        "rows": [
+          "R1",
+          "R5",
+          "R12",
+          "R15",
+          "R17",
+          "R18"
+        ]
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/Indicator?$filter=startswith(IndicatorCode,'TOBACCO_MPOWER')",
+        "performed_on": "2026-11-22",
+        "result": "33 MPOWER tables; all countries and years together about 380,000 rows",
+        "rows": [
+          "R21"
+        ]
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/SHS_1 (and SHS_2, SHS_3, TOBACCO_0000000346, TOBACCO_0000000344)",
+        "performed_on": "2026-11-22",
+        "result": "SHS_*: 8 rows, WHO regions, 2004 only. TOBACCO_0000000344/346: no data.",
+        "rows": [
+          "R3",
+          "R4",
+          "R19"
+        ]
+      }
+    ],
+    "analytical_notes": [
+      {
+        "id": "A1",
+        "note": "Whether to model the P provisions jointly, or use P_Group, is an analysis decision. Retrieving the full P bundles keeps both options open.",
+        "rows": [
+          "R2"
+        ]
+      },
+      {
+        "id": "A2",
+        "note": "The meaning of each MPOWER level (1-5) and of the compliance scores must be read from the technical notes of the WHO report on the global tobacco epidemic before analysis.",
+        "rows": [
+          "R22"
+        ]
+      }
+    ],
+    "purpose": null
+  },
+  "approval": {
+    "status": "approved",
+    "approved_by": "Pedro",
+    "approved_on": "2026-11-22",
+    "notes": "Testing. I am unsure of Espen's needs. Approved on the Data Fetcher page (plan sha256 d4c579d563ed)."
+  },
+  "indicator_mapping": [
+    {
+      "research_variable": "Tobacco Enforce bans: E1 direct advertising",
+      "register_rows": [
+        "R18"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_E1_DIRECTADBANS",
+      "official_name": "Tobacco Enforce bans: E1 direct advertising",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "E - Enforce",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_E1_DIRECTADBANS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "731 rows, 43 countries, years {'2022': 344, '2024': 387}, 9 question(s); 16 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Enforce bans: E2 indirect advertising",
+      "register_rows": [
+        "R18"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_E2_INDIRECTADBANS",
+      "official_name": "Tobacco Enforce bans: E2 indirect advertising",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "E - Enforce",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_E2_INDIRECTADBANS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "989 rows, 43 countries, years {'2022': 473, '2024': 516}, 12 question(s); 31 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Enforce bans: E3 indirect advertising, additional bans",
+      "register_rows": [
+        "R18"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS",
+      "official_name": "Tobacco Enforce bans: E3 indirect advertising, additional bans",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "E - Enforce",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "602 rows, 43 countries, years {'2022': 301, '2024': 301}, 7 question(s); 4 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: population-based national surveys, tobacco use and smoking, prevalence",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M1_PREVALENCE",
+      "official_name": "Tobacco Monitor: population-based national surveys, tobacco use and smoking, prevalence",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M1_PREVALENCE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "774 rows, 43 countries, years {'2024': 774}, 6 question(s); 451 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: population-based national surveys, tobacco use and smoking",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M1_TOBACCOUSESMOKING",
+      "official_name": "Tobacco Monitor: population-based national surveys, tobacco use and smoking",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M1_TOBACCOUSESMOKING?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2024': 172}, 4 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M2_PREVALENCE",
+      "official_name": "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M2_PREVALENCE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "516 rows, 43 countries, years {'2024': 516}, 4 question(s); 291 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M2_SMOKELESSECIGARETTES",
+      "official_name": "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M2_SMOKELESSECIGARETTES?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2024': 172}, 4 question(s); 8 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking, prevalence",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M3_PREVALENCE",
+      "official_name": "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking, prevalence",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M3_PREVALENCE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "774 rows, 43 countries, years {'2024': 774}, 6 question(s); 553 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M3_TOBACCOUSESMOKINGSCHOOL",
+      "official_name": "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M3_TOBACCOUSESMOKINGSCHOOL?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2024': 172}, 4 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M4_PREVALENCE",
+      "official_name": "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M4_PREVALENCE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "516 rows, 43 countries, years {'2024': 516}, 4 question(s); 352 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_M4_SMOKELESSECIGARETTESSCHOOL",
+      "official_name": "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "M - Monitor",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_M4_SMOKELESSECIGARETTESSCHOOL?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2024': 172}, 4 question(s); 8 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco MPOWER: National tobacco control programmes (NTCP)",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_NTCP",
+      "official_name": "Tobacco MPOWER: National tobacco control programmes (NTCP)",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "NTCP",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_NTCP?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "516 rows, 43 countries, years {'2022': 258, '2024': 258}, 6 question(s); 116 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Offer help: O1 Support for treatment of tobacco dependence / Availability of smoking cessation support",
+      "register_rows": [
+        "R12",
+        "R13"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_O1_TREATMENTSUPPORT",
+      "official_name": "Tobacco Offer help: O1 Support for treatment of tobacco dependence / Availability of smoking cessation support",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "Overview (composites)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_O1_TREATMENTSUPPORT?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "946 rows, 43 countries, years {'2022': 473, '2024': 473}, 11 question(s); 99 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Offer help: O2 Availability of tobacco cessation medications",
+      "register_rows": [
+        "R5",
+        "R6",
+        "R7",
+        "R11"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+      "official_name": "Tobacco Offer help: O2 Availability of tobacco cessation medications",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "Overview (composites)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "1118 rows, 43 countries, years {'2022': 559, '2024': 559}, 13 question(s); 163 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco MPOWER overview: Monitor, Protect people, Offer help, Warn of dangers, Enforce bans, Raise taxes",
+      "register_rows": [
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_OVERVIEW",
+      "official_name": "Tobacco MPOWER overview: Monitor, Protect people, Offer help, Warn of dangers, Enforce bans, Raise taxes",
+      "unit": "MPOWER group level 1-5 (ordinal category)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "Overview (composites)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_OVERVIEW?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "602 rows, 43 countries, years {'2022': 301, '2024': 301}, 7 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco MPOWER Protect people: P1 smoke-free places (national legislation)",
+      "register_rows": [
+        "R1",
+        "R2",
+        "R19"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+      "official_name": "Tobacco MPOWER Protect people: P1 smoke-free places (national legislation)",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "P - Protect",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_P1_SMOKEFREEPLACES?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "688 rows, 43 countries, years {'2022': 344, '2024': 344}, 8 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco MPOWER Protect people: P2 smoke-free places, additional characteristics",
+      "register_rows": [
+        "R1"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS",
+      "official_name": "Tobacco MPOWER Protect people: P2 smoke-free places, additional characteristics",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "P - Protect",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "602 rows, 43 countries, years {'2022': 301, '2024': 301}, 7 question(s); 4 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Affordability",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_AFFORDABILITY",
+      "official_name": "Tobacco Raise taxes: Affordability",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_AFFORDABILITY?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2022': 43, '2024': 129}, 3 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes:  Reported use of earmarked tobacco taxes",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_EARMARKED",
+      "official_name": "Tobacco Raise taxes:  Reported use of earmarked tobacco taxes",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "9 of 43 countries (only countries reporting earmarking)",
+      "time_coverage": "2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_EARMARKED?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "9 rows, 9 countries, years {'2024': 9}, 1 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Inflation-adjusted prices for most sold brand of cigarettes",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_INFLATIONADJUSTEDPRICES",
+      "official_name": "Tobacco Raise taxes: Inflation-adjusted prices for most sold brand of cigarettes",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_INFLATIONADJUSTEDPRICES?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "172 rows, 43 countries, years {'2022': 86, '2024': 86}, 2 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Retail price for tobacco and nicotine products",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_PRICE",
+      "official_name": "Tobacco Raise taxes: Retail price for tobacco and nicotine products",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_PRICE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "2322 rows, 43 countries, years {'2022': 516, '2024': 1806}, 7 question(s); 568 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: National taxes for tobacco and nicotine products",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_TAX",
+      "official_name": "Tobacco Raise taxes: National taxes for tobacco and nicotine products",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_TAX?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "2494 rows, 43 countries, years {'2022': 344, '2024': 2150}, 8 question(s); 779 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Tax administration",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_TAXADMINISTRATION",
+      "official_name": "Tobacco Raise taxes: Tax administration",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_TAXADMINISTRATION?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "86 rows, 43 countries, years {'2024': 86}, 2 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Annual tax revenues from tobacco products, latest reporting period",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_TAXREVENUELATEST",
+      "official_name": "Tobacco Raise taxes: Annual tax revenues from tobacco products, latest reporting period",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_TAXREVENUELATEST?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "344 rows, 43 countries, years {'2024': 344}, 8 question(s); 147 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Annual tax revenues from tobacco products, previous reporting period",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_TAXREVENUEPREVIOUS",
+      "official_name": "Tobacco Raise taxes: Annual tax revenues from tobacco products, previous reporting period",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_TAXREVENUEPREVIOUS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "344 rows, 43 countries, years {'2024': 344}, 8 question(s); 154 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Raise taxes: Tobacco tax structure",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_R_TAXSTRUCTURE",
+      "official_name": "Tobacco Raise taxes: Tobacco tax structure",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2024",
+      "category": "R - Raise taxes",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_R_TAXSTRUCTURE?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "602 rows, 43 countries, years {'2024': 602}, 14 question(s); 130 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W1a cigarette packaging health warnings",
+      "register_rows": [
+        "R15"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W1A_CIGARETTES",
+      "official_name": "Tobacco Warning: W1a cigarette packaging health warnings",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W1A_CIGARETTES?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "946 rows, 43 countries, years {'2022': 473, '2024': 473}, 11 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W1b smoked tobacco packaging health warnings",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W1B_TOBACCOSMOKED",
+      "official_name": "Tobacco Warning: W1b smoked tobacco packaging health warnings",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W1B_TOBACCOSMOKED?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "946 rows, 43 countries, years {'2022': 473, '2024': 473}, 11 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W1c smokeless tobacco packaging health warnings",
+      "register_rows": [
+        "R21"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W1C_TOBACCOSMOKELESS",
+      "official_name": "Tobacco Warning: W1c smokeless tobacco packaging health warnings",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W1C_TOBACCOSMOKELESS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "946 rows, 43 countries, years {'2022': 473, '2024': 473}, 11 question(s); 120 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W2a cigarette packaging health warnings, other characteristics",
+      "register_rows": [
+        "R13",
+        "R16"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W2A_CIGARETTES",
+      "official_name": "Tobacco Warning: W2a cigarette packaging health warnings, other characteristics",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W2A_CIGARETTES?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "1290 rows, 43 countries, years {'2022': 645, '2024': 645}, 15 question(s); 13 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W2b smoked tobacco packaging health warnings, other characteristics",
+      "register_rows": [
+        "R16"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W2B_TOBACCOSMOKED",
+      "official_name": "Tobacco Warning: W2b smoked tobacco packaging health warnings, other characteristics",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W2B_TOBACCOSMOKED?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "1290 rows, 43 countries, years {'2022': 645, '2024': 645}, 15 question(s); 15 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W2c smokeless tobacco packaging health warnings, other characteristics",
+      "register_rows": [
+        "R16"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W2C_TOBACCOSMOKELESS",
+      "official_name": "Tobacco Warning: W2c smokeless tobacco packaging health warnings, other characteristics",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W2C_TOBACCOSMOKELESS?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "1290 rows, 43 countries, years {'2022': 645, '2024': 645}, 15 question(s); 248 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Tobacco Warning: W3 anti-tobacco mass-media campaigns",
+      "register_rows": [
+        "R17"
+      ],
+      "source": "who_gho",
+      "indicator_code": "TOBACCO_MPOWER_W3_MASSMEDIA",
+      "official_name": "Tobacco Warning: W3 anti-tobacco mass-media campaigns",
+      "unit": "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension",
+      "measurement_scale": "text",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024",
+      "category": "W - Warn",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_W3_MASSMEDIA?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "774 rows, 43 countries, years {'2022': 387, '2024': 387}, 9 question(s); 292 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "population_coverage": "Country legislation and programmes as reported to WHO; one row per country x report year x question (TOBACCO_INDICATOR)"
+    },
+    {
+      "research_variable": "Overall compliance with bans on direct advertising (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_all_dir",
+      "official_name": "Overall compliance with bans on direct advertising (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_all_dir?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 8 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on advertising on national television and radio (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e1",
+      "official_name": "Compliance with ban on advertising on national television and radio (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e1?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 8 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on promotional discounts (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e10",
+      "official_name": "Compliance with ban on promotional discounts (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e10?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 17 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on use of brand name of non-tobacco product for tobacco product (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e11",
+      "official_name": "Compliance with ban on use of brand name of non-tobacco product for tobacco product (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e11?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 24 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on indentifying non-tobacco products with tobacco brand names (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e12",
+      "official_name": "Compliance with ban on indentifying non-tobacco products with tobacco brand names (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e12?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 30 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on appearance of tobacco brands in TV and/or films (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e13",
+      "official_name": "Compliance with ban on appearance of tobacco brands in TV and/or films (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e13?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 13 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on appearance of tobacco products in TV and/or films (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e14",
+      "official_name": "Compliance with ban on appearance of tobacco products in TV and/or films (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e14?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 38 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on sponsorship (contributions and/or publicity of contributions) (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e15",
+      "official_name": "Compliance with ban on sponsorship (contributions and/or publicity of contributions) (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e15?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 22 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on advertising in local magazines and newspapers (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e3",
+      "official_name": "Compliance with ban on advertising in local magazines and newspapers (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e3?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 11 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on billboard and outdoor advertising (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e5",
+      "official_name": "Compliance with ban on billboard and outdoor advertising (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e5?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 11 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on advertising at point of sale (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e6",
+      "official_name": "Compliance with ban on advertising at point of sale (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e6?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 21 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with ban on free distribution in mail or through other means (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e9",
+      "official_name": "Compliance with ban on free distribution in mail or through other means (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e9?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 17 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Overall compliance with bans on promotion and sponsorship (score)",
+      "register_rows": [
+        "R18",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "E_compl_e_all_indir",
+      "official_name": "Overall compliance with bans on promotion and sponsorship (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "E - Enforce (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/E_compl_e_all_indir?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 9 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Overall compliance with regulations on smoke-free environments (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_all_sfe",
+      "official_name": "Overall compliance with regulations on smoke-free environments (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_all_sfe?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 11 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free health-care facilities law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p1",
+      "official_name": "Compliance with smoke-free health-care facilities law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p1?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 18 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free education facilities except universities law (score)",
+      "register_rows": [
+        "R19",
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p2",
+      "official_name": "Compliance with smoke-free education facilities except universities law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p2?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 12 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free universities law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p3",
+      "official_name": "Compliance with smoke-free universities law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p3?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 20 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free government facilities law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p4",
+      "official_name": "Compliance with smoke-free government facilities law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p4?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 24 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free indoor offices law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p5",
+      "official_name": "Compliance with smoke-free indoor offices law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p5?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 27 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free restaurants law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p6",
+      "official_name": "Compliance with smoke-free restaurants law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p6?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 27 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free pubs and bars law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p7",
+      "official_name": "Compliance with smoke-free pubs and bars law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p7?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 27 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Compliance with smoke-free public transport law (score)",
+      "register_rows": [
+        "R2",
+        "R22"
+      ],
+      "source": "who_gho",
+      "indicator_code": "P_compl_p8",
+      "official_name": "Compliance with smoke-free public transport law (score)",
+      "unit": "Compliance score 0-10 (expert assessment)",
+      "measurement_scale": "ordinal",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022",
+      "category": "P - Protect (compliance)",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/P_compl_p8?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "43 rows, 43 countries, years {'2022': 43}, 1 question(s); 23 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ]
+    },
+    {
+      "research_variable": "Estimate of current tobacco use prevalence (%) (age-standardized)",
+      "register_rows": [
+        "R23"
+      ],
+      "source": "who_gho",
+      "indicator_code": "M_Est_tob_curr_std",
+      "official_name": "Estimate of current tobacco use prevalence (%) (age-standardized)",
+      "unit": "% of population aged 15+",
+      "measurement_scale": "ratio",
+      "geographic_coverage": "43 of 43 countries",
+      "time_coverage": "2022, 2024 (2023 left out)",
+      "category": "Context - prevalence",
+      "documentation_url": "https://www.who.int/data/gho/data/themes/topics/topic-details/GHO/tobacco-control-mpower",
+      "verification_status": "confirmed",
+      "evidence": [
+        {
+          "query": "https://ghoapi.azureedge.net/api/M_Est_tob_curr_std?$filter=SpatialDim in (<43 EU/OECD ISO3 codes>) and TimeDim ge 2022 and TimeDim le 2024 and SpatialDimType eq 'COUNTRY'",
+          "performed_on": "2026-11-22",
+          "result": "387 rows, 43 countries, years {'2022': 129, '2023': 129, '2024': 129}, 3 question(s); 0 rows with a missing marker ('. . .', '—', 'Not applicable')"
+        }
+      ],
+      "definition": "Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised to the WHO Standard Population.",
+      "population_coverage": "Population aged 15+, by sex",
+      "alternatives_considered": [
+        "M_Est_smk_curr_std (smoking only)",
+        "M_Est_tob_curr (crude rate)"
+      ]
+    }
+  ],
+  "research": {
+    "objective": "Retrieve every WHO MPOWER indicator for EU and OECD countries in the 2022 and 2024 report years, including the summary level and compliance score of each dimension.",
+    "subject": "Tobacco control policy (WHO FCTC MPOWER measures)",
+    "variables": [
+      "Tobacco Enforce bans: E1 direct advertising",
+      "Tobacco Enforce bans: E2 indirect advertising",
+      "Tobacco Enforce bans: E3 indirect advertising, additional bans",
+      "Tobacco Monitor: population-based national surveys, tobacco use and smoking, prevalence",
+      "Tobacco Monitor: population-based national surveys, tobacco use and smoking",
+      "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes",
+      "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking, prevalence",
+      "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking",
+      "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes, prevalence",
+      "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes",
+      "Tobacco MPOWER: National tobacco control programmes (NTCP)",
+      "Tobacco Offer help: O1 Support for treatment of tobacco dependence / Availability of smoking cessation support",
+      "Tobacco Offer help: O2 Availability of tobacco cessation medications",
+      "Tobacco MPOWER overview: Monitor, Protect people, Offer help, Warn of dangers, Enforce bans, Raise taxes",
+      "Tobacco MPOWER Protect people: P1 smoke-free places (national legislation)",
+      "Tobacco MPOWER Protect people: P2 smoke-free places, additional characteristics",
+      "Tobacco Raise taxes: Affordability",
+      "Tobacco Raise taxes:  Reported use of earmarked tobacco taxes",
+      "Tobacco Raise taxes: Inflation-adjusted prices for most sold brand of cigarettes",
+      "Tobacco Raise taxes: Retail price for tobacco and nicotine products",
+      "Tobacco Raise taxes: National taxes for tobacco and nicotine products",
+      "Tobacco Raise taxes: Tax administration",
+      "Tobacco Raise taxes: Annual tax revenues from tobacco products, latest reporting period",
+      "Tobacco Raise taxes: Annual tax revenues from tobacco products, previous reporting period",
+      "Tobacco Raise taxes: Tobacco tax structure",
+      "Tobacco Warning: W1a cigarette packaging health warnings",
+      "Tobacco Warning: W1b smoked tobacco packaging health warnings",
+      "Tobacco Warning: W1c smokeless tobacco packaging health warnings",
+      "Tobacco Warning: W2a cigarette packaging health warnings, other characteristics",
+      "Tobacco Warning: W2b smoked tobacco packaging health warnings, other characteristics",
+      "Tobacco Warning: W2c smokeless tobacco packaging health warnings, other characteristics",
+      "Tobacco Warning: W3 anti-tobacco mass-media campaigns",
+      "Overall compliance with bans on direct advertising (score)",
+      "Compliance with ban on advertising on national television and radio (score)",
+      "Compliance with ban on promotional discounts (score)",
+      "Compliance with ban on use of brand name of non-tobacco product for tobacco product (score)",
+      "Compliance with ban on indentifying non-tobacco products with tobacco brand names (score)",
+      "Compliance with ban on appearance of tobacco brands in TV and/or films (score)",
+      "Compliance with ban on appearance of tobacco products in TV and/or films (score)",
+      "Compliance with ban on sponsorship (contributions and/or publicity of contributions) (score)",
+      "Compliance with ban on advertising in local magazines and newspapers (score)",
+      "Compliance with ban on billboard and outdoor advertising (score)",
+      "Compliance with ban on advertising at point of sale (score)",
+      "Compliance with ban on free distribution in mail or through other means (score)",
+      "Overall compliance with bans on promotion and sponsorship (score)",
+      "Overall compliance with regulations on smoke-free environments (score)",
+      "Compliance with smoke-free health-care facilities law (score)",
+      "Compliance with smoke-free education facilities except universities law (score)",
+      "Compliance with smoke-free universities law (score)",
+      "Compliance with smoke-free government facilities law (score)",
+      "Compliance with smoke-free indoor offices law (score)",
+      "Compliance with smoke-free restaurants law (score)",
+      "Compliance with smoke-free pubs and bars law (score)",
+      "Compliance with smoke-free public transport law (score)",
+      "Estimate of current tobacco use prevalence (%) (age-standardized)"
+    ],
+    "geographic_coverage": "43 countries: EU27 and OECD38 (22 in both)",
+    "time_period": "2022 and 2024 (MPOWER report years)",
+    "frequency": "Biennial (MPOWER report years)",
+    "aggregation_level": "Country",
+    "output_formats": [
+      "csv",
+      "xlsx",
+      "json"
+    ],
+    "analytical_applications": [
+      "Cross-country comparison of tobacco control policies"
+    ],
+    "stated_by_user": [
+      "MPOWER policy and intervention list (screenshot)",
+      "Year 2024 and 2022",
+      "Only EU and OECD countries",
+      "Fetch all of the MPOWER indicators",
+      "Wants the summary (compliance) indicator of each dimension"
+    ],
+    "assumptions": [
+      "OECD membership taken as the 38 members known on 2026-11-22; a new member would need adding",
+      "Prevalence context M_Est_tob_curr_std (Q7 default)",
+      "Parked rows follow the Q1-Q4 defaults"
+    ]
+  },
+  "sources": [
+    {
+      "id": "who_gho",
+      "provider": "World Health Organization",
+      "api_name": "Global Health Observatory OData API",
+      "api_type": "odata",
+      "documentation_url": "https://www.who.int/data/gho/info/gho-odata-api",
+      "base_url": "https://ghoapi.azureedge.net/api",
+      "authentication": "none (public API)",
+      "rate_limits": "Not documented; requests are spaced 0.5 s apart",
+      "metadata_available": "Indicator names; dimension labels (DIMENSION/{type}/DimensionValues), including the 264 TOBACCO_INDICATOR question titles. No units or definitions.",
+      "update_frequency": "With each WHO report on the global tobacco epidemic (biennial)",
+      "priority": "official_api",
+      "proposed_connector": "who_gho"
+    }
+  ],
+  "expected_data_structure": "Long format: one row per table x country x report year x question (TOBACCO_INDICATOR dimension, labelled with the question title), plus sex or product where the table has it. Answers stay as text in value_text; numeric answers also in value. Optional wide country-year panel.",
+  "known_limitations": [
+    "Several tables exist only in the 2024 report (M1-M4, R tax structure, revenue, administration, earmarking): no 2022 values.",
+    "Compliance scores are published for P and E only. Per-item and P scores are single indicators whose latest value is 2022; in 2024 only the two overall E scores exist, inside E1 and E2. The 2022 and 2024 E scores are separate assessments with different values.",
+    "Compliance scores are missing ('. . .') for many countries (e.g. 14 of 43 for the 2024 E scores).",
+    "The 2024 _Group levels exist only in TOBACCO_MPOWER_OVERVIEW; the single _Group codes stop in 2022.",
+    "Levels, scores and Yes/No answers are categories kept as text; no conversion or recomputation (R7).",
+    "MPOWER does not cover vaping in smoke-free laws, second-hand smoke exposure, workplace cessation or NRT forms (rows R3, R4, R8-R10, R14, R20 parked).",
+    "M_Est_tob_curr_std includes modelled estimates; 2023 is left out to keep to the report years."
+  ],
+  "outstanding_decisions": []
+}
