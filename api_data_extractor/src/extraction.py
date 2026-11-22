@@ -28,7 +28,7 @@ from .export import describe_files, sha256_file, write_csv, write_json, write_wo
 from .logging_config import add_file_handler, get_logger, remove_handler
 from .metadata import data_dictionary, manifest, readme
 from .quality import QualityIssue, run_quality_checks
-from .transformation import TransformResult, dataframe_records, transform
+from .transformation import TransformResult, dataframe_records, labelled_wide_panel, transform
 from .validation import ValidationReport, validate_config_file
 
 logger = logging.getLogger(APP_NAME)
@@ -194,17 +194,22 @@ def _execute(report, output_dir, started_at, session_factory, sleep, environ, lo
     # 10. Export ---------------------------------------------------------------------------
     files: List[str] = ["raw_data.json"]
     out = config.output
+    wide_view = None
+    if result.wide_panel is not None:
+        labels = {(t.source, i.code): i.label or i.name or (indicator_metadata.get(f"{t.source}:{i.code}") or {}).get("name")
+                  for t in config.extractions for i in t.indicators}
+        wide_view = labelled_wide_panel(result.wide_panel, df, {k: v for k, v in labels.items() if v})
     issues_df = _issues_frame(issues)
     if "csv" in out.formats:
         write_csv(output_dir / "dataset.csv", df)
         files.append("dataset.csv")
         if result.wide_panel is not None:
-            write_csv(output_dir / "dataset_wide.csv", result.wide_panel)
+            write_csv(output_dir / "dataset_wide.csv", wide_view)
             files.append("dataset_wide.csv")
     if "xlsx" in out.formats:
         sheets = {"data": df}
         if result.wide_panel is not None:
-            sheets["wide_panel"] = result.wide_panel
+            sheets["wide_panel"] = wide_view
         sheets["quality_checks"] = issues_df
         write_workbook(output_dir / "dataset.xlsx", sheets)
         files.append("dataset.xlsx")

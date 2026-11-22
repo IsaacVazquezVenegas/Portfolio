@@ -118,7 +118,7 @@ def base_config() -> Dict[str, Any]:
                 ],
             }
         ],
-        "processing": {"wide_panel": True},
+        "processing": {"wide_panel": True, "missing_values": {"markers": [". . ."]}},
         "output": {"directory": "output", "folder_name": "{project}", "formats": ["csv", "xlsx", "json"]},
     }
 

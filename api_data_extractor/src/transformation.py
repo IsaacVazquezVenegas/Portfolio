@@ -295,6 +295,54 @@ def build_wide_panel(df: pd.DataFrame) -> pd.DataFrame:
     return wide[cols].sort_values(["country_code", "period"]).reset_index(drop=True)
 
 
+#: Dimensions that qualify a series rather than name it: listed after the others in a label.
+QUALIFYING_DIMENSIONS = ("SEX", "AGEGROUP", "RESIDENCEAREATYPE", "WEALTHQUINTILE", "EDUCATIONLEVEL")
+
+
+def dimension_label_parts(dimension_labels: Optional[str]) -> List[str]:
+    """'SEX=Both sexes; TOBACCO_INDICATOR=Ban on ...' -> ['Ban on ...', 'Both sexes'] (qualifiers last)."""
+    if not dimension_labels or (isinstance(dimension_labels, float) and pd.isna(dimension_labels)):
+        return []
+    pairs = []
+    for part in str(dimension_labels).split("; "):
+        key, _, label = part.partition("=")
+        if label:
+            pairs.append((key in QUALIFYING_DIMENSIONS, key, label))
+    return [label for _, _, label in sorted(pairs, key=lambda p: (p[0], QUALIFYING_DIMENSIONS.index(p[1]) if p[0] else 0))]
+
+
+def series_label(indicator_label: str, dimension_labels: Optional[str] = None) -> str:
+    """Readable name of a series: the indicator's short label, then its dimension labels."""
+    return " · ".join([indicator_label] + dimension_label_parts(dimension_labels))
+
+
+def labelled_wide_panel(wide: pd.DataFrame, df: pd.DataFrame, labels: Dict[Tuple[str, str], str]) -> pd.DataFrame:
+    """The wide panel with readable column names; its first row holds the original column codes.
+
+    ``labels`` maps (source_id, indicator_code) to the indicator's short label (configuration
+    ``label``, else its name). Labels are made unique by appending the code when two collide.
+    """
+    if wide.empty:
+        return wide
+    keys = df.drop_duplicates(["source_id", "indicator_code", "dimensions"])
+    readable: Dict[str, str] = {}
+    for _, row in keys.iterrows():
+        column = wide_column_name(row)
+        base = labels.get((row["source_id"], row["indicator_code"])) or row.get("indicator_name") or row["indicator_code"]
+        readable[column] = series_label(str(base), row.get("dimension_labels"))
+    fixed = {"country_code": "Country code", "country_name": "Country", "period": "Period", "year": "Year"}
+    names, seen = [], {}
+    for col in wide.columns:
+        name = fixed.get(col) or readable.get(col) or col
+        seen[name] = seen.get(name, 0) + 1
+        names.append(name)
+    names = [f"{n} ({c})" if seen[n] > 1 and c not in fixed else n for n, c in zip(names, wide.columns)]
+    codes = pd.DataFrame([list(wide.columns)], columns=names)
+    out = wide.copy()
+    out.columns = names
+    return pd.concat([codes, out.astype(object)], ignore_index=True)
+
+
 def dataframe_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
     """JSON-safe records (NaN -> None)."""
     return json.loads(df.to_json(orient="records", force_ascii=False))

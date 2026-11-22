@@ -140,6 +140,13 @@ def plan_warnings(plan: ExtractionPlan) -> List[str]:
         warnings.append(f"register row {row.id} ('{row.user_wording}') still needs another source: {row.reason}")
     for q in scoping.open_questions():
         warnings.append(f"question {q.id} is still open")
+    recorded = {c.source for c in plan.missing_value_codes}
+    for src in plan.sources:
+        if src.id not in recorded:
+            warnings.append(
+                f"how source '{src.id}' codes missing values is not recorded (missing_value_codes): "
+                "run value-codes on a test run and classify each code"
+            )
     return warnings
 
 
@@ -188,6 +195,17 @@ def check_plan(config: ExtractionConfig, config_path: Path, require_approval: bo
                 warnings.append(
                     f"indicator '{ind.code}' (source '{task.source}') is not part of the extraction plan's indicator mapping"
                 )
+    markers = {m.strip().lower() for m in config.processing.missing_values.markers}
+    used_sources = {t.source for t in config.extractions}
+    absent = sorted({c for s_id in used_sources for c in plan.no_data_codes(s_id) if c.strip().lower() not in markers})
+    if absent:
+        errors.append(
+            f"the plan classifies {absent} as 'no_data' but processing.missing_values.markers does not list them"
+        )
+    recorded = {c.code.strip().lower() for c in plan.missing_value_codes}
+    unrecorded = sorted(m for m in config.processing.missing_values.markers if m.strip().lower() not in recorded)
+    if plan.missing_value_codes and unrecorded:
+        warnings.append(f"missing-value marker(s) {unrecorded} are not recorded in the plan's missing_value_codes")
     for m in plan.indicator_mapping:
         if m.verification_status != "confirmed":
             warnings.append(f"indicator '{m.indicator_code}' availability is '{m.verification_status}' in the plan")

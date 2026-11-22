@@ -98,7 +98,7 @@ processing:
   standardise_periods: true
   missing_values:
     treatment: keep
-    markers: []                         # "Not applicable" is meaningful and is kept as a value
+    markers: [". . ."]                  # recorded in the plan (missing_value_codes); "Not applicable" and "—" stay as answers
   deduplicate: true
   wide_panel: true
 

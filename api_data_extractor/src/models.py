@@ -239,6 +239,10 @@ class Source(StrictModel):
 class IndicatorSpec(StrictModel):
     code: str = Field(min_length=1, max_length=200, pattern=r"^[A-Za-z0-9_.\-]+$")
     name: Optional[str] = Field(None, description="Official indicator name, checked against source metadata.")
+    label: Optional[str] = Field(
+        None, max_length=120,
+        description="Short human-readable label used as column name in the wide view and on the page (default: name).",
+    )
     definition: Optional[str] = None
     unit: Optional[str] = None
     category: Optional[str] = None
@@ -622,6 +626,9 @@ class IndicatorMapping(StrictModel):
     source: str
     indicator_code: str
     official_name: str
+    label: Optional[str] = Field(
+        None, max_length=120, description="Short human-readable label for the wide view and the page (copied to the configuration)."
+    )
     definition: Optional[str] = None
     unit: Optional[str] = None
     measurement_scale: Optional[str] = None
@@ -642,6 +649,19 @@ class IndicatorMapping(StrictModel):
                 f"indicator '{self.indicator_code}' is marked '{self.verification_status}' but has no evidence"
             )
         return self
+
+
+class MissingValueCode(StrictModel):
+    """How a source writes 'no observation' (Stage 4): every non-numeric code is classified once."""
+
+    source: str = Field(description="A sources[].id.")
+    code: str = Field(min_length=1, description="The text exactly as the API returns it, e.g. '. . .'.")
+    meaning: Literal["no_data", "not_applicable", "category"] = Field(
+        description="no_data: flagged as missing (listed in processing.missing_values.markers); "
+        "not_applicable: a real answer kept as a category; category: an ordinary answer."
+    )
+    note: Optional[str] = None
+    evidence: Optional[str] = Field(None, description="Where the code was seen (value-codes output, documentation URL).")
 
 
 PlanStatus = Literal["scoping", "draft", "approved", "rejected"]
@@ -678,9 +698,16 @@ class ExtractionPlan(StrictModel):
         default_factory=list, description="At least one from status 'draft' on."
     )
     expected_data_structure: Optional[str] = Field(None, description="Required from status 'draft' on.")
+    missing_value_codes: List[MissingValueCode] = Field(
+        default_factory=list,
+        description="Stage 4: how each source codes missing values; 'no_data' codes become processing.missing_values.markers.",
+    )
     known_limitations: List[str] = Field(default_factory=list)
     outstanding_decisions: List[str] = Field(default_factory=list)
     approval: Approval = Field(default_factory=Approval)
+
+    def no_data_codes(self, source: Optional[str] = None) -> List[str]:
+        return [c.code for c in self.missing_value_codes if c.meaning == "no_data" and (source is None or c.source == source)]
 
     @model_validator(mode="after")
     def _cross(self) -> "ExtractionPlan":
@@ -700,6 +727,9 @@ class ExtractionPlan(StrictModel):
         for m in self.indicator_mapping:
             if m.source not in ids:
                 raise ValueError(f"indicator mapping '{m.indicator_code}' refers to unknown source '{m.source}'")
+        for c in self.missing_value_codes:
+            if ids and c.source not in ids:
+                raise ValueError(f"missing-value code '{c.code}' refers to unknown source '{c.source}'")
         if self.scoping is not None:
             rows = self.scoping.row_ids()
             for m in self.indicator_mapping:

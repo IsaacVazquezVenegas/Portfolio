@@ -274,9 +274,34 @@ def _quantiles(values: List[float]) -> List[float]:
     return [round(x, 4) for x in (v[0], q[0], q[1], q[2], v[-1])]
 
 
-def summarise_dataset(csv_path: Union[str, Path]) -> Tuple[List[dict], Dict[str, str]]:
+def run_labels(run_dir: Union[str, Path]) -> Dict[Tuple[str, str], str]:
+    """Short indicator labels from a run's configuration ((source, code) -> label or name)."""
+    import yaml
+
+    path = Path(run_dir) / "extraction_config.yaml"
+    if not path.exists():
+        return {}
+    try:
+        cfg = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
+    out: Dict[Tuple[str, str], str] = {}
+    for task in cfg.get("extractions") or []:
+        for ind in task.get("indicators") or []:
+            label = ind.get("label") or ind.get("name")
+            if label and ind.get("code"):
+                out[(task.get("source"), ind["code"])] = label
+    return out
+
+
+def summarise_dataset(csv_path: Union[str, Path], labels: Optional[Dict[Tuple[str, str], str]] = None
+                      ) -> Tuple[List[dict], Dict[str, str]]:
     """One summary per series (indicator code + dimensions) of a long dataset."""
     import pandas as pd
+
+    from .transformation import series_label
+
+    labels = labels or {}
 
     df = pd.read_csv(csv_path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
     countries = {}
@@ -315,6 +340,8 @@ def summarise_dataset(csv_path: Union[str, Path]) -> Tuple[List[dict], Dict[str,
             "source_id": source,
             "indicator_code": code,
             "indicator_name": first["indicator_name"],
+            "label": series_label(labels.get((source, code)) or first["indicator_name"] or code, dims),
+            "group": first["category"] or "Other",
             "category": first["category"],
             "dimensions": dims,
             "unit": first["unit"],
@@ -329,6 +356,74 @@ def summarise_dataset(csv_path: Union[str, Path]) -> Tuple[List[dict], Dict[str,
             "distribution": dist,
         })
     return series, countries
+
+
+def build_views(csv_path: Union[str, Path], series: List[dict], target: Path,
+                order: Optional[List[Tuple[str, str]]] = None) -> str:
+    """Write the values the page's views need (by year, by indicator, by country) and return the index file.
+
+    ``views.json`` lists years, countries, groups and series; ``views.partN.json`` hold the cells,
+    split below MAX_PART_BYTES. A cell is a number, a text category, ``{"m": text}`` when the source
+    reported no value, or null when the source has no row.
+    """
+    import pandas as pd
+
+    df = pd.read_csv(csv_path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
+    df = df[df["year"].str.isdigit()]
+    years = sorted({int(y) for y in df["year"]})
+    yi = {y: i for i, y in enumerate(years)}
+    countries = {}
+    for c, n in zip(df["country_code"], df["country_name"]):
+        countries.setdefault(c, n or c)
+    keys = {(s["source_id"], s["indicator_code"], s["dimensions"]): s for s in series}
+    cells: Dict[str, Dict[str, list]] = {}
+    for (source, code, dims), g in df.groupby(["source_id", "indicator_code", "dimension_labels"], sort=True):
+        s = keys.get((source, code, dims))
+        if s is None:
+            continue
+        numeric = s["kind"] == "numeric"
+        out: Dict[str, list] = {}
+        for c, y, v, t, miss in zip(g["country_code"], g["year"], g["value"], g["value_text"], g["missing"]):
+            row = out.setdefault(c, [None] * len(years))
+            if miss.lower() == "true":
+                cell: Any = {"m": t}
+            elif numeric and v != "" and _is_number(v):
+                cell = float(v)
+            else:
+                cell = t
+            i = yi[int(y)]
+            if row[i] is None or isinstance(row[i], dict):
+                row[i] = cell
+        cells[s["key"]] = out
+    parts, chunk, size = [], {}, 2
+    part_of: Dict[str, int] = {}
+
+    def flush():
+        name = f"views.part{len(parts) + 1}.json"
+        (target / name).write_text(json.dumps(chunk, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        parts.append(name)
+    for key, data in cells.items():
+        n = len(json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode("utf-8")) + len(key) + 8
+        if chunk and size + n > MAX_PART_BYTES:
+            flush(); chunk, size = {}, 2
+        chunk[key] = data; size += n
+        part_of[key] = len(parts)
+    if chunk or not parts:
+        flush()
+    # Groups follow the order of the configuration's indicators (the plan's order), else alphabetical.
+    rank = {k: i for i, k in enumerate(order or [])}
+    first: Dict[str, int] = {}
+    for s in series:
+        r = rank.get((s["source_id"], s["indicator_code"]), len(rank))
+        first[s["group"]] = min(first.get(s["group"], r), r)
+    groups = sorted(first, key=lambda g: (first[g], g))
+    series = sorted(series, key=lambda s: (groups.index(s["group"]), rank.get((s["source_id"], s["indicator_code"]), len(rank)), s["key"]))
+    index = {"years": years, "countries": countries, "groups": groups, "parts": parts,
+             "series": [{"key": s["key"], "label": s["label"], "group": s["group"], "code": s["indicator_code"],
+                         "kind": s["kind"], "ordinal": s["ordinal"], "unit": s["unit"], "categories": s["categories"],
+                         "part": part_of.get(s["key"], 0)} for s in series]}
+    _write_json(target / "views.json", index)
+    return "views.json"
 
 
 def _cell(v: Any) -> Any:
@@ -470,12 +565,18 @@ def export_run(run_dir: Union[str, Path], site: Union[str, Path], plan_id: Optio
         files.append({"name": RAW_FILE, "bytes": (run_dir / RAW_FILE).stat().st_size, "build": "join",
                       "parts": _split_raw(run_dir / RAW_FILE, target)})
 
-    series, countries = summarise_dataset(run_dir / "dataset.csv") if (run_dir / "dataset.csv").exists() else ([], {})
+    labels = run_labels(run_dir)
+    series, countries = (summarise_dataset(run_dir / "dataset.csv", labels)
+                         if (run_dir / "dataset.csv").exists() else ([], {}))
+    views = build_views(run_dir / "dataset.csv", series, target, order=list(labels)) if series else None
+    if (run_dir / "view_spec.json").exists():  # views adjusted by Claude on request
+        shutil.copy2(run_dir / "view_spec.json", target / "view_spec.json")
     approval = (manifest.get("configuration") or {}).get("plan_approval") or {}
     summary = {
         "page_schema_version": PAGE_SCHEMA_VERSION,
         "run_id": run_id,
         "plan_id": plan_id,
+        "views": views,
         "status": manifest.get("status"),
         "started_at": (manifest.get("execution") or {}).get("started_at"),
         "finished_at": (manifest.get("execution") or {}).get("finished_at"),
@@ -509,4 +610,4 @@ def export_run(run_dir: Union[str, Path], site: Union[str, Path], plan_id: Optio
                        "plan_sha256": None, "status": None, "changes": []})
     _write_json(folder / "history.json", history)
     return {"plan_id": plan_id, "run_id": run_id, "rows": summary["rows"], "series": len(series),
-            "files": files, "folder": str(target)}
+            "files": files, "views": summary.get("views"), "folder": str(target)}

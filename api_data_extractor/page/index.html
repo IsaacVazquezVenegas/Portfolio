@@ -71,6 +71,8 @@ button { font: inherit; color: inherit; }
 .tab .n { color: var(--fg-3); font-weight: 400; margin-left: 4px; }
 
 .panel { display: grid; gap: 12px; }
+.panel > *, #dataview, #vbody { min-width: 0; }
+table.grid td { font-size: 11.5px; }
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .list-head, .row { display: grid; gap: 10px; align-items: center; padding: 6px 12px; }
 .list-head { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-3); border-bottom: 1px solid var(--line); background: var(--surface-2); }
@@ -521,37 +523,233 @@ function catColours(series) {
   return c => map[c] || "--na";
 }
 
+/* Data tab. Four views of one run:
+   series (quality: coverage and a chart chosen from each series' shape), by year (every series for
+   every country), by indicator (one series across countries and years) and by country (a profile).
+   The engine chooses the views (views.json); view_spec.json, written by Claude on request, overrides them. */
+const VIEWS = [["series", "Series", "Each series with its coverage and a chart suited to its data"],
+               ["year", "By year", "Every indicator for every country, one year at a time"],
+               ["indicator", "By indicator", "One indicator across countries and years"],
+               ["country", "By country", "All indicators of one country"]];
+const V = { run: null, index: null, cells: {}, spec: null, view: null, year: null, group: null, key: null, country: null, q: "" };
+
 function tabData(host) {
-  if (!S.runs.length) { host.innerHTML = `<div class="empty">No data yet.<br><span class="hint">After the first run, each indicator shows its coverage by country and year, the distribution of its values and a row preview.</span></div>`; return; }
+  if (!S.runs.length) { host.innerHTML = `<div class="empty">No data yet.<br><span class="hint">After the first run, this tab shows the data by year, by indicator and by country, with charts suited to each series.</span></div>`; return; }
   const runId = S.run || S.runs[0].run_id;
   host.innerHTML = `<div class="chips"><label class="hint" for="runsel">Run</label><select id="runsel" title="Which run's data to show">${S.runs.map(r => `<option value="${esc(r.run_id)}" ${r.run_id === runId ? "selected" : ""}>${esc(r.run_id)}${r.test_run ? " (test)" : ""}</option>`).join("")}</select>
-    <span class="hint" style="margin-left:auto">Coverage counts country × year cells that hold a value, among the countries and years the series reaches.</span></div><div id="dataview"><span class="hint">Loading…</span></div>`;
+    <span id="viewchips" class="chips"></span>
+    <button class="btn" id="redo" style="margin-left:auto" title="Copies a request asking Claude to look at this run's data and set better views and charts. Use it when the automatic choice is not helpful.">Redo the views with Claude</button></div>
+    <div id="redox"></div><div id="dataview"><span class="hint">Loading…</span></div>`;
   $("#runsel", host).onchange = e => { S.run = e.target.value; S.summary = null; tabData(host); };
-  loadSummary(runId).then(s => paintData($("#dataview", host), s), e => { $("#dataview", host).innerHTML = `<div class="empty">Summary not found (${esc(e.message)}).</div>`; });
+  $("#redo", host).onclick = () => copyText(`/datafetcher ${S.project}: redo the views of run ${runId}. What is not helpful: `, $("#redox", host));
+  loadSummary(runId).then(async s => {
+    await loadViews(s);
+    const chips = $("#viewchips", host);
+    const avail = V.index ? VIEWS : VIEWS.slice(0, 1);
+    if (!V.view || !avail.some(v => v[0] === V.view)) V.view = (V.spec && V.spec.default_view) || store.get("dataview", V.index ? "year" : "series");
+    if (!avail.some(v => v[0] === V.view)) V.view = "series";
+    chips.innerHTML = avail.map(([k, l, t]) => `<button class="chip" data-v="${k}" aria-pressed="${V.view === k}" title="${esc(t)}">${l}</button>`).join("");
+    chips.querySelectorAll(".chip").forEach(c => c.onclick = () => { V.view = c.dataset.v; store.set("dataview", V.view); tabData(host); });
+    paintView($("#dataview", host), s);
+  }, e => { $("#dataview", host).innerHTML = `<div class="empty">Summary not found (${esc(e.message)}).</div>`; });
 }
 
-function completeness(s) { let v = 0, all = 0; Object.values(s.coverage).forEach(str => { for (const ch of str) { all++; if (ch === "v") v++; } }); return all ? v / all : 0; }
+async function loadViews(sum) {
+  if (V.run === sum.run_id) return;
+  V.run = sum.run_id; V.index = null; V.cells = {}; V.spec = null; V.key = null;
+  const base = `data/${S.project}/runs/${sum.run_id}`;
+  if (sum.views) {
+    try {
+      V.index = await getJSON(`${base}/${sum.views}`);
+      for (const part of V.index.parts) Object.assign(V.cells, await getJSON(`${base}/${part}`));
+    } catch (e) { V.index = null; }
+  }
+  try { V.spec = await getJSON(`${base}/view_spec.json`); } catch (e) { V.spec = null; }
+  const sp = (V.spec && V.spec.series) || {};
+  if (V.index) {
+    V.index.series = V.index.series.filter(s => !(sp[s.key] || {}).hidden).map(s => ({...s, label: (sp[s.key] || {}).label || s.label}));
+    if (V.spec && V.spec.groups_order) V.index.groups = [...V.spec.groups_order.filter(g => V.index.groups.includes(g)), ...V.index.groups.filter(g => !V.spec.groups_order.includes(g))];
+    V.year = V.index.years.at(-1); V.group = V.index.groups[0]; V.country = Object.keys(V.index.countries)[0];
+  }
+  sum.series.forEach(s => { const o = sp[s.key] || {}; if (o.label) s.label = o.label; if (o.chart) s.chart = o.chart; });
+}
 
-function paintData(el, sum) {
-  el.innerHTML = `${sum.test_run ? `<div class="note warn" style="margin-bottom:12px">Test run: the plan was not approved when these data were retrieved.</div>` : ""}
+function paintView(el, sum) {
+  const note = V.spec ? `<div class="note" style="margin-bottom:10px">Views adjusted by Claude${V.spec.created ? " on " + fmtD(V.spec.created) : ""}${V.spec.note ? ": " + esc(V.spec.note) : "."}</div>` : "";
+  const test = sum.test_run ? `<div class="note warn" style="margin-bottom:10px">Test run: the plan was not approved when these data were retrieved.</div>` : "";
+  el.innerHTML = test + note + `<div id="vbody"></div>`;
+  const body = $("#vbody", el);
+  ({series: viewSeries, year: viewYear, indicator: viewIndicator, country: viewCountry}[V.view] || viewSeries)(body, sum);
+}
+
+/* ---------- cell values and colours ---------- */
+const cellOf = (key, iso, yi) => ((V.cells[key] || {})[iso] || [])[yi] ?? null;
+const isMiss = c => c && typeof c === "object";
+const showVal = c => c == null ? "" : isMiss(c) ? c.m : typeof c === "number" ? +c.toFixed(2) : c;
+const YES = /^(yes|yes in (most|some)|fully|partially)$/i, NO = /^(no)$/i;
+function colStats(key, yi) {
+  const vals = []; for (const iso in (V.cells[key] || {})) { const c = cellOf(key, iso, yi); if (typeof c === "number") vals.push(c); }
+  vals.sort((a, b) => a - b); return vals;
+}
+function cellStyle(s, c, stats) {
+  if (c == null) return "";
+  if (isMiss(c)) return "color:var(--fg-3)";
+  if (typeof c === "number") {
+    if (!stats || stats.length < 2) return "";
+    const r = stats.findIndex(v => v >= c) / (stats.length - 1);
+    return `background:color-mix(in srgb, var(--accent) ${Math.round(8 + r * 52)}%, transparent)`;
+  }
+  if (s.ordinal && /^\d+$/.test(c)) { const n = Math.max(1, Math.min(5, +c)); return `background:var(--o${n});color:${n >= 4 ? "#fff" : "inherit"}`; }
+  if (/^yes$/i.test(c) || /^fully$/i.test(c) || /^yes in most$/i.test(c)) return "background:color-mix(in srgb, var(--good) 28%, transparent)";
+  if (/^(partially|yes in some)$/i.test(c)) return "background:color-mix(in srgb, var(--good) 14%, transparent)";
+  if (NO.test(c)) return "background:var(--absent)";
+  return "";
+}
+function seriesById(key) { return (V.index && V.index.series.find(s => s.key === key)) || null; }
+
+/* ---------- series view (quality) ---------- */
+function completeness(s) { let v = 0, all = 0; Object.values(s.coverage).forEach(str => { for (const ch of str) { all++; if (ch === "v") v++; } }); return all ? v / all : 0; }
+function chartFor(s) {
+  if (s.chart) return s.chart;
+  const n = s.years.length;
+  if (s.kind === "numeric") return n <= 1 ? "rank" : n <= 3 ? "dumbbell" : "distribution";
+  return n <= 1 ? "categories" : n <= 3 ? "changes" : "stacked";
+}
+function viewSeries(el, sum) {
+  const q = V.q.toLowerCase();
+  const list = sum.series.filter(s => !q || (s.label + " " + s.key).toLowerCase().includes(q));
+  el.innerHTML = `<div class="chips" style="margin-bottom:8px"><input type="search" id="sq" placeholder="Search series by label or code" value="${esc(V.q)}" style="min-width:240px" aria-label="Search series"><span class="hint">${fmtN(list.length)} of ${fmtN(sum.series.length)} series</span></div>
     <div class="list"><div class="list-head cols-series"><span>Series</span><span>Kind</span><span>Countries</span><span>Years</span><span>Coverage</span></div>
-    ${sum.series.map(s => { const c = completeness(s); return `<div class="row cols-series" tabindex="0" data-key="ser:${esc(s.key)}">
-      <span title="${esc(s.key)}"><span class="mono">${esc(s.indicator_code)}</span>${s.dimensions ? ` <span class="hint">${esc(s.dimensions)}</span>` : ""} <span class="muted">${esc(s.indicator_name)}</span></span>
+    ${list.map(s => { const c = completeness(s); return `<div class="row cols-series" tabindex="0" data-key="ser:${esc(s.key)}">
+      <span title="${esc(s.key)}">${esc(s.label || s.indicator_name)} <span class="mono hint">${esc(s.indicator_code)}</span></span>
       <span class="muted">${s.kind === "numeric" ? "numeric" : s.ordinal ? "ordinal" : "categorical"}</span><span class="mono">${s.countries}</span>
       <span class="mono muted">${s.years.length ? `${s.years[0]}–${s.years.at(-1)} (${s.years.length})` : "—"}</span>
-      <span style="display:flex;gap:8px;align-items:center"><span class="meter" style="flex:1"><span style="width:${(c * 100).toFixed(1)}%"></span></span><span class="mono hint">${Math.round(c * 100)}%</span></span></div>`; }).join("")}</div>
+      <span style="display:flex;gap:8px;align-items:center" title="Share of country × year cells with a value; cells the source reported without a value do not count"><span class="meter" style="flex:1"><span style="width:${(c * 100).toFixed(1)}%"></span></span><span class="mono hint">${Math.round(c * 100)}%</span></span></div>`; }).join("")}</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn" id="prevbtn" title="Loads dataset.csv in the page (about ${((sum.files.find(f => f.name === "dataset.csv") || {}).bytes / 1e6 || 0).toFixed(1)} MB) to browse rows with their source request">Preview rows</button>
       <span class="hint">Every row links to the request that returned it.</span></div><div id="prev"></div>`;
+  const sq = $("#sq", el); sq.oninput = () => { V.q = sq.value; clearTimeout(sq.h); sq.h = setTimeout(() => { viewSeries(el, sum); const n = $("#sq", el); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
   toggleRows(el, (key, d) => {
     const s = sum.series.find(x => "ser:" + x.key === key);
-    d.innerHTML = `<dl class="kv" style="margin-bottom:4px"><dt>Unit</dt><dd>${esc(s.unit || "—")}</dd><dt>Observations</dt><dd>${fmtN(s.observations)}${s.missing ? ` · ${fmtN(s.missing)} reported without a value` : ""}</dd><dt>Category</dt><dd>${esc(s.category || "—")}</dd></dl>
-      <div class="grid2"><div><h2 style="margin-bottom:6px">${s.kind === "numeric" ? "Median and interquartile range by year" : "Countries by value and year"}</h2><div class="chart" data-chart></div><div class="legend" data-legend style="margin-top:6px"></div></div>
+    d.innerHTML = `<dl class="kv" style="margin-bottom:4px"><dt>Unit</dt><dd>${esc(s.unit || "—")}</dd><dt>Observations</dt><dd>${fmtN(s.observations)}${s.missing ? ` · ${fmtN(s.missing)} reported without a value` : ""}</dd><dt>Group</dt><dd>${esc(s.group || s.category || "—")}</dd></dl>
+      <div class="grid2"><div><h2 style="margin-bottom:6px" data-title></h2><div class="chart" data-chart></div><div class="legend" data-legend style="margin-top:6px"></div></div>
       <div class="covwrap"><h2>Coverage by country and year</h2><canvas class="cov" data-cov></canvas>
       <div class="legend"><span><i style="background:var(--accent)"></i>value</span><span><i style="background:var(--miss)"></i>reported, no value</span><span><i style="background:var(--absent);border:1px solid var(--line-strong)"></i>not in the source</span></div></div></div>`;
-    drawChart(s, $("[data-chart]", d), $("[data-legend]", d));
+    drawSeriesChart(s, $("[data-chart]", d), $("[data-legend]", d), $("[data-title]", d));
     drawCoverage(s, sum.countries, $("[data-cov]", d));
   });
   $("#prevbtn", el).onclick = () => preview($("#prev", el), sum);
+}
+
+/* ---------- charts chosen from the series' shape ---------- */
+function seriesValues(s, yi) {
+  const out = []; const names = (V.index || {}).countries || {};
+  for (const iso in (V.cells[s.key] || {})) out.push({iso, name: names[iso] || iso, c: cellOf(s.key, iso, yi)});
+  return out;
+}
+function yearIdx(y) { return V.index ? V.index.years.indexOf(y) : -1; }
+function drawSeriesChart(s, host, legend, title) {
+  const kind = chartFor(s);
+  const titles = {rank: `Countries ranked, ${s.years.at(-1) || ""}`, dumbbell: `Change by country, ${s.years[0]} to ${s.years.at(-1)}`,
+    distribution: "Median and interquartile range by year", categories: `Countries by answer, ${s.years.at(-1) || ""}`,
+    changes: "Countries by answer and year", stacked: "Countries by answer and year"};
+  if (title) title.textContent = titles[kind] || "";
+  if (!V.cells[s.key] && ["rank", "dumbbell", "categories"].includes(kind)) { drawChart(s, host, legend); return; }
+  if (kind === "rank") return drawRank(s, host, legend);
+  if (kind === "dumbbell") return drawDumbbell(s, host, legend);
+  if (kind === "categories") return drawCategories(s, host, legend);
+  drawChart(s, host, legend);
+  if (kind === "changes" && V.cells[s.key]) listChanges(s, host);
+}
+function noData(rows) { const m = rows.filter(r => r.c == null || isMiss(r.c)); return m.length ? `<div class="hint" style="margin-top:6px">No value: ${m.map(r => `<span title="${esc(r.name)}${isMiss(r.c) ? " · reported as " + esc(r.c.m) : ""}">${esc(r.iso)}</span>`).join(", ")}</div>` : ""; }
+function drawRank(s, host, legend) {
+  const rows = seriesValues(s, yearIdx(s.years.at(-1)));
+  const ok = rows.filter(r => typeof r.c === "number").sort((a, b) => b.c - a.c);
+  const max = niceMax(Math.max(...ok.map(r => r.c), 0) || 1), W = 520, L = 46, R = 40, bh = 14, H = ok.length * bh + 6;
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(s.label)}: countries ranked">${ok.map((r, i) => { const w = (W - L - R) * r.c / max;
+    return `<text x="${L - 6}" y="${i * bh + 11}" text-anchor="end">${esc(r.iso)}</text><rect x="${L}" y="${i * bh + 2}" width="${Math.max(1, w)}" height="${bh - 4}" rx="2" fill="var(--accent)" data-tip="${esc(`<b>${esc(r.name)}</b><br>${+r.c.toFixed(2)} ${esc(s.unit || "")}`)}"/><text x="${L + w + 4}" y="${i * bh + 11}">${+r.c.toFixed(1)}</text>`; }).join("")}</svg>` + noData(rows);
+  legend.innerHTML = `<span class="hint">${esc(s.unit || "")}</span>`;
+  host.querySelectorAll("[data-tip]").forEach(m => { m.onmousemove = e => showTip(e, m.dataset.tip); m.onmouseleave = hideTip; });
+}
+function drawDumbbell(s, host, legend) {
+  const y0 = s.years[0], y1 = s.years.at(-1), a = seriesValues(s, yearIdx(y0)), b = seriesValues(s, yearIdx(y1));
+  const rows = b.map(r => ({...r, c0: (a.find(x => x.iso === r.iso) || {}).c})).filter(r => typeof r.c === "number" || typeof r.c0 === "number")
+    .sort((p, q) => (typeof q.c === "number" ? q.c : -1e9) - (typeof p.c === "number" ? p.c : -1e9));
+  const vals = rows.flatMap(r => [r.c, r.c0]).filter(v => typeof v === "number");
+  const max = niceMax(Math.max(...vals, 0) || 1), W = 520, L = 46, R = 12, bh = 14, H = rows.length * bh + 6, X = v => L + (W - L - R) * v / max;
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(s.label)}: change by country">${rows.map((r, i) => { const y = i * bh + 8;
+    const has0 = typeof r.c0 === "number", has1 = typeof r.c === "number";
+    return `<text x="${L - 6}" y="${y + 3}" text-anchor="end">${esc(r.iso)}</text>${has0 && has1 ? `<line x1="${X(r.c0)}" x2="${X(r.c)}" y1="${y}" y2="${y}" stroke="var(--line-strong)" stroke-width="2"/>` : ""}
+      ${has0 ? `<circle cx="${X(r.c0)}" cy="${y}" r="4" fill="var(--o1)"/>` : ""}${has1 ? `<circle cx="${X(r.c)}" cy="${y}" r="4" fill="var(--accent)"/>` : ""}
+      <rect x="0" y="${y - 7}" width="${W}" height="${bh}" fill="transparent" data-tip="${esc(`<b>${esc(r.name)}</b><br>${y0}: ${has0 ? +r.c0.toFixed(2) : "no value"}<br>${y1}: ${has1 ? +r.c.toFixed(2) : "no value"}`)}"/>`; }).join("")}</svg>` + noData(b);
+  legend.innerHTML = `<span><i style="background:var(--o1)"></i>${y0}</span><span><i style="background:var(--accent)"></i>${y1}</span><span class="hint">${esc(s.unit || "")}</span>`;
+  host.querySelectorAll("[data-tip]").forEach(m => { m.onmousemove = e => showTip(e, m.dataset.tip); m.onmouseleave = hideTip; });
+}
+function drawCategories(s, host, legend) {
+  const rows = seriesValues(s, yearIdx(s.years.at(-1))), by = {};
+  rows.forEach(r => { if (r.c != null && !isMiss(r.c)) (by[r.c] = by[r.c] || []).push(r); });
+  const cats = Object.keys(by).sort((p, q) => by[q].length - by[p].length), max = Math.max(...cats.map(c => by[c].length), 1), col = catColours({...s, categories: cats});
+  host.innerHTML = `<div class="sub">${cats.map(c => `<div class="item" style="display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:8px;align-items:center">
+      <span><b style="font-weight:500">${esc(c)}</b> <span class="hint">${by[c].length}</span><div class="hint" style="white-space:normal">${by[c].map(r => `<span title="${esc(r.name)}">${esc(r.iso)}</span>`).join(" ")}</div></span>
+      <span class="meter"><span style="width:${100 * by[c].length / max}%;background:var(${col(c)})"></span></span></div>`).join("")}</div>` + noData(rows);
+  legend.innerHTML = "";
+}
+function listChanges(s, host) {
+  const y0 = s.years[0], y1 = s.years.at(-1), i0 = yearIdx(y0), i1 = yearIdx(y1), names = V.index.countries;
+  const ch = Object.keys(V.cells[s.key] || {}).map(iso => ({iso, a: cellOf(s.key, iso, i0), b: cellOf(s.key, iso, i1)}))
+    .filter(r => r.a != null && r.b != null && !isMiss(r.a) && !isMiss(r.b) && String(r.a) !== String(r.b));
+  const div = document.createElement("div"); div.className = "hint"; div.style.marginTop = "6px";
+  div.innerHTML = ch.length ? `Changed from ${y0} to ${y1}: ${ch.map(r => `<span title="${esc(names[r.iso] || r.iso)}">${esc(r.iso)} ${esc(r.a)} → ${esc(r.b)}</span>`).join(" · ")}` : `No country changed answer from ${y0} to ${y1}.`;
+  host.after(div);
+}
+
+/* ---------- by year ---------- */
+function groupChips(el, onPick) {
+  return `<span class="chips">${V.index.groups.map(g => `<button class="chip" data-g="${esc(g)}" aria-pressed="${V.group === g}" title="Show the ${esc(g)} indicators">${esc(g)}</button>`).join("")}</span>`;
+}
+function bindGroups(el, redraw) { el.querySelectorAll(".chip[data-g]").forEach(c => c.onclick = () => { V.group = c.dataset.g; redraw(); }); }
+function viewYear(el, sum) {
+  const ix = V.index, yi = ix.years.indexOf(V.year), inGroup = ix.series.filter(s => s.group === V.group);
+  const cols = inGroup.filter(s => Object.keys(V.cells[s.key] || {}).some(iso => cellOf(s.key, iso, yi) != null));
+  const empty = inGroup.length - cols.length;
+  const isos = Object.keys(ix.countries).sort((a, b) => ix.countries[a].localeCompare(ix.countries[b]));
+  const stats = Object.fromEntries(cols.filter(s => s.kind === "numeric").map(s => [s.key, colStats(s.key, yi)]));
+  el.innerHTML = `<div class="chips" style="margin-bottom:8px"><label class="hint" for="ysel">Year</label><select id="ysel" title="Report year to show">${ix.years.map(y => `<option ${y === V.year ? "selected" : ""}>${y}</option>`).join("")}</select>${groupChips(el)}</div>
+    <div class="hint" style="margin-bottom:6px">${cols.length} indicator(s) in ${esc(V.group)} · ${isos.length} countries${empty ? ` · ${empty} indicator(s) have no data in ${V.year} (see the other year)` : ""}. Hover a cell for its full label; grey text means the source reported no value.</div>
+    ${cols.length ? "" : `<div class="empty">No ${esc(V.group)} data in ${V.year}.</div>`}
+    <div class="scrollx"><table class="prev grid"><thead><tr><th style="position:sticky;left:0;background:var(--surface)">Country</th>${cols.map(s => `<th title="${esc(s.label)} (${esc(s.code)})" style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${esc(s.label)}</th>`).join("")}</tr></thead>
+    <tbody>${isos.map(iso => `<tr><td style="position:sticky;left:0;background:var(--surface)" title="${esc(iso)}">${esc(ix.countries[iso])}</td>${cols.map(s => { const c = cellOf(s.key, iso, yi);
+      return `<td style="${cellStyle(s, c, stats[s.key])};max-width:140px;overflow:hidden;text-overflow:ellipsis" title="${esc(ix.countries[iso])} · ${esc(s.label)} · ${V.year}: ${esc(c == null ? "not in the source" : showVal(c))}">${esc(showVal(c))}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  $("#ysel", el).onchange = e => { V.year = +e.target.value; viewYear(el, sum); };
+  bindGroups(el, () => viewYear(el, sum));
+}
+
+/* ---------- by indicator ---------- */
+function viewIndicator(el, sum) {
+  const ix = V.index;
+  if (!V.key || !seriesById(V.key)) V.key = (ix.series.find(s => s.group === V.group) || ix.series[0]).key;
+  const vs = seriesById(V.key), s = sum.series.find(x => x.key === V.key) || vs;
+  const isos = Object.keys(ix.countries).sort((a, b) => ix.countries[a].localeCompare(ix.countries[b]));
+  const stats = ix.years.map((y, i) => vs.kind === "numeric" ? colStats(vs.key, i) : null);
+  el.innerHTML = `<div class="chips" style="margin-bottom:8px">${groupChips(el)}</div>
+    <div class="chips" style="margin-bottom:8px"><label class="hint" for="isel">Indicator</label><select id="isel" style="max-width:100%" title="Indicator to show">${ix.series.filter(x => x.group === V.group).map(x => `<option value="${esc(x.key)}" ${x.key === V.key ? "selected" : ""}>${esc(x.label)}</option>`).join("")}</select></div>
+    <div class="hint" style="margin-bottom:8px"><span class="mono">${esc(vs.code)}</span> · ${esc(vs.unit || "")}</div>
+    <div class="grid2"><div><h2 style="margin-bottom:6px" data-title></h2><div class="chart" data-chart></div><div class="legend" data-legend style="margin-top:6px"></div></div>
+    <div class="scrollx"><table class="prev"><thead><tr><th>Country</th>${ix.years.map(y => `<th>${y}</th>`).join("")}</tr></thead><tbody>${isos.map(iso => `<tr><td>${esc(ix.countries[iso])}</td>${ix.years.map((y, i) => { const c = cellOf(vs.key, iso, i);
+      return `<td style="${cellStyle(vs, c, stats[i])}" title="${esc(c == null ? "not in the source" : showVal(c))}">${esc(showVal(c))}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+  $("#isel", el).onchange = e => { V.key = e.target.value; viewIndicator(el, sum); };
+  bindGroups(el, () => { V.key = null; viewIndicator(el, sum); });
+  drawSeriesChart(s, $("[data-chart]", el), $("[data-legend]", el), $("[data-title]", el));
+}
+
+/* ---------- by country ---------- */
+function viewCountry(el, sum) {
+  const ix = V.index, isos = Object.keys(ix.countries).sort((a, b) => ix.countries[a].localeCompare(ix.countries[b]));
+  const rows = ix.series.filter(s => s.group === V.group);
+  el.innerHTML = `<div class="chips" style="margin-bottom:8px"><label class="hint" for="csel">Country</label><select id="csel" title="Country to show">${isos.map(i => `<option value="${esc(i)}" ${i === V.country ? "selected" : ""}>${esc(ix.countries[i])}</option>`).join("")}</select>${groupChips(el)}</div>
+    <div class="scrollx"><table class="prev"><thead><tr><th>Indicator</th>${ix.years.map(y => `<th>${y}</th>`).join("")}</tr></thead><tbody>${rows.map(s => `<tr><td title="${esc(s.code)}" style="white-space:normal;min-width:240px">${esc(s.label)}</td>${ix.years.map((y, i) => { const c = cellOf(s.key, V.country, i);
+      return `<td style="${cellStyle(s, c, s.kind === "numeric" ? colStats(s.key, i) : null)}">${esc(showVal(c))}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  $("#csel", el).onchange = e => { V.country = e.target.value; viewCountry(el, sum); };
+  bindGroups(el, () => viewCountry(el, sum));
 }
 
 function drawChart(s, host, legend) {
@@ -593,7 +791,7 @@ function drawCoverage(s, names, cv) {
   const full = codes.every(c => !/[^v]/.test(s.coverage[c]));
   const gaps = codes.filter(c => /[^v]/.test(s.coverage[c]));
   const note = document.createElement("div"); note.className = "hint";
-  note.textContent = full ? `Complete: all ${codes.length} countries have a value in each of the ${ny} years.` : `${gaps.length} of ${codes.length} countries have gaps. Hover a cell for its country and year.`;
+  note.textContent = full ? `Complete: all ${codes.length} countries have a value${ny > 1 ? ` in each of the ${ny} years` : ""}.` : `${gaps.length} of ${codes.length} countries have gaps. Hover a cell for its country and year.`;
   cv.before(note);
   if (full) { cv.hidden = true; cv.nextElementSibling && (cv.nextElementSibling.hidden = true); return; }
   cv.style.height = Math.min(3 * codes.length, 600) + "px"; cv.style.width = Math.min(ny * 18, 520) + "px";
