@@ -258,7 +258,7 @@ def _execute(report, output_dir, started_at, session_factory, sleep, environ, lo
     files.append("extraction_manifest.json")
     if out.readme:
         manifest_for_readme = dict(manifest_data, output_files=manifest_data["output_files"] + [{"file": "extraction_manifest.json"}])
-        (output_dir / "README.md").write_text(readme(config, manifest_for_readme, issues, dictionary["variables"]), encoding="utf-8")
+        (output_dir / "README.md").write_text(readme(config, manifest_for_readme, issues, dictionary["variables"], report.plan), encoding="utf-8")
         files.append("README.md")
 
     return ExtractionResult(status=status, output_dir=output_dir, rows=len(df), issues=issues, files=files,

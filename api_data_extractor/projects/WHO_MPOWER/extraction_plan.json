@@ -3,6 +3,33 @@
   "plan_id": "WHO_MPOWER",
   "created": "2026-11-19",
   "prepared_by": "LLM (Claude, following LLM_DATA_EXTRACTION_PROTOCOL.md) for researcher review",
+  "scoping": {
+    "starting_point": "B",
+    "inputs": [
+      {"form": "text", "description": "\"Initial test case: WHO MPOWER\" and the list of outputs wanted (CSV, Excel, raw JSON, data dictionary, log, manifest)"}
+    ],
+    "purpose": "Test case of the extraction framework; descriptive and panel analysis of policy adoption (assumed)",
+    "scope": {
+      "countries": {"value": "All countries reported by WHO", "origin": "assumed"},
+      "period": {"value": "2007-2022 (all MPOWER report years in the composite indicators)", "origin": "assumed"},
+      "breakdown": {"value": "National totals; prevalence by sex", "origin": "assumed"},
+      "outputs": {"value": "CSV, Excel, raw JSON, data dictionary, log, manifest", "origin": "stated"}
+    },
+    "retrieval_strategy": "Composite scores only: the seven *_Group indicators, one per MPOWER measure, plus age-standardised prevalence as context. Component bundles were not requested. This section was reconstructed on 2026-11-22 from the plan's own record; the plan predates the scoping section.",
+    "requirements_register": [
+      {"id": "R1", "user_wording": "WHO MPOWER", "group": "M", "interpreted_concept": "Monitor (M) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "M_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R2", "user_wording": "WHO MPOWER", "group": "P", "interpreted_concept": "Protect (P) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "P_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R3", "user_wording": "WHO MPOWER", "group": "O", "interpreted_concept": "Offer (O) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "O_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R4", "user_wording": "WHO MPOWER", "group": "W", "interpreted_concept": "Warn - health warnings (W) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "W_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R5", "user_wording": "WHO MPOWER", "group": "W", "interpreted_concept": "Warn - mass media campaigns (W-MM) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "W-MM_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R6", "user_wording": "WHO MPOWER", "group": "E", "interpreted_concept": "Enforce (E) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "E_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R7", "user_wording": "WHO MPOWER", "group": "R", "interpreted_concept": "Raise taxes (R) policy level (WHO composite score)", "kind_of_data": ["composite_index"], "candidates": [{"code": "R_Group", "level": "composite", "source": "WHO GHO"}], "status": "clear"},
+      {"id": "R8", "group": "Context", "interpreted_concept": "Current tobacco use prevalence, age-standardised, by sex", "kind_of_data": ["outcome"], "origin": "assumed", "candidates": [{"code": "M_Est_tob_curr_std", "level": "single", "source": "WHO GHO"}], "status": "clear"}
+    ],
+    "catalogue_lookups": [
+      {"query": "https://ghoapi.azureedge.net/api/Indicator?$filter=endswith(IndicatorCode,'_Group')", "performed_on": "2026-11-19", "result": "M_Group, P_Group, O_Group, W_Group, W-MM_Group, E_Group, R_Group listed with official names", "rows": ["R1", "R2", "R3", "R4", "R5", "R6", "R7"]}
+    ]
+  },
   "research": {
     "objective": "Build a country-year panel of WHO MPOWER tobacco control policy achievement levels, with tobacco use prevalence as context, as the initial test case of the extraction framework.",
     "subject": "Tobacco control policy (WHO FCTC MPOWER measures)",
@@ -54,6 +81,7 @@
   "indicator_mapping": [
     {
       "research_variable": "Monitor (M) policy level",
+      "register_rows": ["R1"],
       "source": "who_gho",
       "indicator_code": "M_Group",
       "official_name": "Monitoring tobacco use and prevention policies",
@@ -71,6 +99,7 @@
     },
     {
       "research_variable": "Protect (P) policy level",
+      "register_rows": ["R2"],
       "source": "who_gho",
       "indicator_code": "P_Group",
       "official_name": "Protecting people from tobacco smoke",
@@ -86,6 +115,7 @@
     },
     {
       "research_variable": "Offer (O) policy level",
+      "register_rows": ["R3"],
       "source": "who_gho",
       "indicator_code": "O_Group",
       "official_name": "Offering help to quit tobacco use",
@@ -101,6 +131,7 @@
     },
     {
       "research_variable": "Warn - health warnings (W) policy level",
+      "register_rows": ["R4"],
       "source": "who_gho",
       "indicator_code": "W_Group",
       "official_name": "Warning about the dangers of tobacco",
@@ -116,6 +147,7 @@
     },
     {
       "research_variable": "Warn - mass media campaigns (W-MM) policy level",
+      "register_rows": ["R5"],
       "source": "who_gho",
       "indicator_code": "W-MM_Group",
       "official_name": "Anti-tobacco mass media campaigns",
@@ -131,6 +163,7 @@
     },
     {
       "research_variable": "Enforce (E) policy level",
+      "register_rows": ["R6"],
       "source": "who_gho",
       "indicator_code": "E_Group",
       "official_name": "Enforcing bans on tobacco advertising, promotion and sponsorship",
@@ -146,6 +179,7 @@
     },
     {
       "research_variable": "Raise taxes (R) policy level",
+      "register_rows": ["R7"],
       "source": "who_gho",
       "indicator_code": "R_Group",
       "official_name": "Raising taxes on tobacco",
@@ -161,6 +195,7 @@
     },
     {
       "research_variable": "Current tobacco use prevalence, age-standardised",
+      "register_rows": ["R8"],
       "source": "who_gho",
       "indicator_code": "M_Est_tob_curr_std",
       "official_name": "Estimate of current tobacco use prevalence (%) (age-standardized)",

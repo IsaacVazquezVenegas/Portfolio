@@ -1,0 +1,535 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "WHO_MPOWER_policies",
+  "created": "2026-11-19",
+  "prepared_by": "LLM (Claude, following LLM_DATA_EXTRACTION_PROTOCOL.md) with the researcher",
+  "scoping": {
+    "starting_point": "B",
+    "inputs": [
+      {
+        "form": "table",
+        "description": "Pasted table with three columns: Component (P/O/W/E), Policy and Interventions"
+      }
+    ],
+    "scope": {
+      "countries": {
+        "value": "All countries",
+        "origin": "default"
+      },
+      "period": {
+        "value": "All report years (2007-2024)",
+        "origin": "default"
+      },
+      "breakdown": {
+        "value": "National level",
+        "origin": "default"
+      },
+      "outputs": {
+        "value": "Long CSV + Excel + country-year panel",
+        "origin": "default"
+      }
+    },
+    "retrieval_strategy": "Retrieve wide, select later: the overview table TOBACCO_MPOWER_OVERVIEW (all seven composite scores) plus every component bundle the list touches, about 15 requests for all countries. Composite scores are retrieved as a reference and never recomputed.",
+    "requirements_register": [
+      {
+        "id": "R1",
+        "user_wording": "Smoke and vaping free air laws / Comprehensive smoke-free law",
+        "group": "P",
+        "interpreted_concept": "National smoke-free legislation by type of place",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "P_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "8 place types"
+          },
+          {
+            "code": "TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "number of places, fines, enforcement"
+          }
+        ],
+        "status": "ambiguous",
+        "questions": [
+          "Q2"
+        ]
+      },
+      {
+        "id": "R2",
+        "user_wording": "Bans in public places / \"Model P together?\"",
+        "group": "P",
+        "interpreted_concept": "Same legislation, by place",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_P1_SMOKEFREEPLACES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "same bundles as R1, no extra request"
+          },
+          {
+            "code": "P_compl_all_sfe",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "compliance scores, with P_compl_p1 to P_compl_p8"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R3",
+        "user_wording": "Eliminate second-hand exposure",
+        "group": "P",
+        "interpreted_concept": "Population exposure to second-hand smoke (an outcome, not a policy)",
+        "kind_of_data": [
+          "outcome"
+        ],
+        "candidates": [
+          {
+            "code": "SHS_2",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "women 15+"
+          },
+          {
+            "code": "SHS_3",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "men 15+"
+          },
+          {
+            "code": "SHS_1",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "children under 15; burden in SHS_4 to SHS_11"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R4",
+        "user_wording": "Smoke-free home with kids",
+        "group": "P",
+        "interpreted_concept": "Children's exposure at home (no MPOWER law covers private homes)",
+        "kind_of_data": [
+          "outcome"
+        ],
+        "candidates": [
+          {
+            "code": "SHS_1",
+            "level": "single",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_0000000346",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "youth survey: exposure at home"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R5",
+        "user_wording": "Pharmaceutical cessation aid: Varenicline",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Varen_sold/_where/_ins"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R6",
+        "user_wording": "Pharmaceutical cessation aid: Cytisine",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Cytisine_sold/_where/_ins"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R7",
+        "user_wording": "Pharmaceutical cessation aid: NRT",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage, Essential Medicines List",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_NRT_sold/_where/_ins/_EML"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R8",
+        "user_wording": "Pharmaceutical cessation aid: Combination NRT",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "needs_another_source",
+        "reason": "An effect size from trials and reviews (e.g. Cochrane); GHO does not distinguish NRT forms.",
+        "questions": [
+          "Q1"
+        ]
+      },
+      {
+        "id": "R9",
+        "user_wording": "Pharmaceutical cessation aid: Nicotine patch alone",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "needs_another_source",
+        "reason": "An effect size from trials and reviews (e.g. Cochrane); not in GHO.",
+        "questions": [
+          "Q1"
+        ]
+      },
+      {
+        "id": "R10",
+        "user_wording": "Pharmaceutical cessation aid: Fast-acting NRT alone",
+        "group": "O",
+        "interpreted_concept": "Efficacy of an NRT regimen",
+        "kind_of_data": [
+          "intervention_effect"
+        ],
+        "candidates": [],
+        "status": "needs_another_source",
+        "reason": "An effect size from trials and reviews (e.g. Cochrane); not in GHO.",
+        "questions": [
+          "Q1"
+        ]
+      },
+      {
+        "id": "R11",
+        "user_wording": "Pharmaceutical cessation aid: Bupropion",
+        "group": "O",
+        "interpreted_concept": "Legal sale, where available, cost coverage",
+        "kind_of_data": [
+          "policy",
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Bup_sold/_where/_ins"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R12",
+        "user_wording": "National cessation support integrated into primary care / Counselling",
+        "group": "O",
+        "interpreted_concept": "Availability and cost coverage of tobacco-dependence treatment by setting",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "TOBACCO_MPOWER_O1_TREATMENTSUPPORT",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "O_Avail_hlth_clin, O_Ins_hlth_clin, hospitals, community..."
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R13",
+        "user_wording": "National free quit lines",
+        "group": "O",
+        "interpreted_concept": "Toll-free quit line",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "O_Quitline",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "in the O1 bundle"
+          },
+          {
+            "code": "O_mCessation",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "related"
+          },
+          {
+            "code": "W25_quitline_number_A",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "quit-line number on packs"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R14",
+        "user_wording": "Workplace cessation",
+        "group": "O",
+        "interpreted_concept": "Cessation programmes at workplaces",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [],
+        "status": "needs_another_source",
+        "reason": "No GHO indicator found (only smoke-free workplaces, P5_indoor_off).",
+        "questions": [
+          "Q3"
+        ]
+      },
+      {
+        "id": "R15",
+        "user_wording": "Health warnings on tobacco packaging",
+        "group": "W",
+        "interpreted_concept": "Warning law, size, graphics, rotation...",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "W_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W1A_CIGARETTES",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "with W1B (other smoked) and W1C (smokeless)"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R16",
+        "user_wording": "Plain packaging",
+        "group": "W",
+        "interpreted_concept": "Mandatory plain packaging",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "W26_plain_packaging_A",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "with _B and _C, inside bundles TOBACCO_MPOWER_W2A/W2B/W2C"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R17",
+        "user_wording": "Anti-tobacco mass media campaigns",
+        "group": "W",
+        "interpreted_concept": "National campaigns and their characteristics",
+        "kind_of_data": [
+          "programme_service"
+        ],
+        "candidates": [
+          {
+            "code": "W-MM_Group",
+            "level": "composite",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_W3_MASSMEDIA",
+            "level": "bundle",
+            "source": "WHO GHO",
+            "note": "Camp_* questions, from 2010"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R18",
+        "user_wording": "Comprehensive bans on advertising, promotion and sponsorship (TAPS, partial, full)",
+        "group": "E",
+        "interpreted_concept": "Direct and indirect advertising bans, compliance",
+        "kind_of_data": [
+          "policy"
+        ],
+        "candidates": [
+          {
+            "code": "E_Group",
+            "level": "composite",
+            "source": "WHO GHO",
+            "note": "'partial/full' is encoded in the E_Group levels; never recomputed"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E1_DIRECTADBANS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E2_INDIRECTADBANS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          },
+          {
+            "code": "TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS",
+            "level": "bundle",
+            "source": "WHO GHO"
+          }
+        ],
+        "status": "clear"
+      },
+      {
+        "id": "R19",
+        "user_wording": "School tobacco",
+        "interpreted_concept": "Unclear: smoke-free schools, youth prevalence, or school prevention programmes",
+        "kind_of_data": [
+          "unknown"
+        ],
+        "candidates": [
+          {
+            "code": "P2_education",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "(a) smoke-free schools, with P_compl_p2"
+          },
+          {
+            "code": "TOBACCO_0000000344",
+            "level": "single",
+            "source": "WHO GHO",
+            "note": "(b) youth prevalence, with Yth_curr_e-cig"
+          }
+        ],
+        "status": "ambiguous",
+        "questions": [
+          "Q4"
+        ]
+      }
+    ],
+    "questions": [
+      {
+        "id": "Q1",
+        "round": 1,
+        "text": "Combination NRT, patch alone and fast-acting NRT look like inputs for an effect model. Do you need intervention effect sizes? Those come from trials and reviews (e.g. Cochrane), not from WHO monitoring data.",
+        "default": "Retrieve country policy data only; R8-R10 parked as 'effect sizes, separate literature task'.",
+        "rows": [
+          "R8",
+          "R9",
+          "R10"
+        ]
+      },
+      {
+        "id": "Q2",
+        "round": 1,
+        "text": "MPOWER P covers smoking only. Should we look for a separate WHO source on e-cigarette regulation in Stage 2?",
+        "default": "Smoking only for now; vaping regulation listed for Stage 2.",
+        "rows": [
+          "R1"
+        ]
+      },
+      {
+        "id": "Q3",
+        "round": 1,
+        "text": "No GHO indicator exists for workplace cessation. Drop it, or look for another source?",
+        "default": "Park.",
+        "rows": [
+          "R14"
+        ]
+      },
+      {
+        "id": "Q4",
+        "round": 1,
+        "text": "By 'school tobacco', do you mean (a) smoke-free school law, (b) youth tobacco use, or (c) school prevention programmes?",
+        "default": "(a) + (b).",
+        "rows": [
+          "R19"
+        ]
+      },
+      {
+        "id": "Q5",
+        "round": 1,
+        "text": "M and R are not in your list. Retrieve only their composite scores (they come free with the overview table), or also their bundles?",
+        "default": "Composites only."
+      }
+    ],
+    "catalogue_lookups": [
+      {
+        "query": "https://ghoapi.azureedge.net/api/Indicator",
+        "performed_on": "2026-11-19",
+        "result": "Full GHO indicator list"
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/DIMENSION/TOBACCO_INDICATOR/DimensionValues",
+        "performed_on": "2026-11-19",
+        "result": "The 264 MPOWER component questions"
+      },
+      {
+        "query": "https://ghoapi.azureedge.net/api/TOBACCO_MPOWER_<bundle>?$filter=SpatialDim eq 'FRA'",
+        "performed_on": "2026-11-19",
+        "result": "One row per country x report year x question (Dim1 = TOBACCO_INDICATOR_<question>); report years 2007-2024",
+        "rows": [
+          "R1",
+          "R5",
+          "R12",
+          "R15",
+          "R17",
+          "R18"
+        ]
+      }
+    ],
+    "analytical_notes": [
+      {
+        "id": "A1",
+        "note": "Whether to model the P provisions jointly, or use P_Group, is an analysis decision. Retrieving the full P bundles keeps both options open.",
+        "rows": [
+          "R2"
+        ]
+      }
+    ]
+  },
+  "approval": {
+    "status": "scoping"
+  }
+}

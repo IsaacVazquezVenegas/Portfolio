@@ -67,6 +67,20 @@ GHO holds MPOWER at three levels:
 
 ---
 
+## The saved checkpoint
+
+At the end of this turn the LLM also gives the researcher the Stage 1 checkpoint (§1.7): [`WHO_MPOWER_stage1_plan.json`](WHO_MPOWER_stage1_plan.json), at status `scoping`. It holds the inputs, the scope with its origin, the strategy, all 19 register rows, the five open questions with their defaults, the look-ups and the analytical note. It has no sources or indicators yet.
+
+```bash
+python -m src.main validate-plan --plan docs/examples/WHO_MPOWER_stage1_plan.json
+#   register: 19 row(s) (2 ambiguous, 13 clear, 4 needs another source); 5 open question(s)
+python -m src.main render-plan --plan docs/examples/WHO_MPOWER_stage1_plan.json --output docs/examples/WHO_MPOWER_stage1_rendered.md
+```
+
+[`WHO_MPOWER_stage1_rendered.md`](WHO_MPOWER_stage1_rendered.md) is the rendered result. A test checks that it matches the JSON.
+
+When the researcher answers, the questions become `answered` (or `default_applied`) and the rows change. For instance, accepting the Q1 default turns R8–R10 into `parked` with the reason "effect sizes, separate literature task". From then on they appear under "Not included in this dataset" in the README of every output folder.
+
 ## Notes on this example
 
 * The engine can already retrieve the bundles as they are: the `who_gho` connector treats `TOBACCO_INDICATOR` as an ordinary dimension, and the values stay text in `value_text`.

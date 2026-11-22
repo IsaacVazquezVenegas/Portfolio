@@ -5,6 +5,7 @@ Run from the ``api_data_extractor`` folder::
     python -m src.main validate --config projects/WHO_MPOWER/extraction_config.yaml
     python -m src.main run      --config projects/WHO_MPOWER/extraction_config.yaml
     python -m src.main validate-plan --plan projects/WHO_MPOWER/extraction_plan.json
+    python -m src.main render-plan --plan projects/WHO_MPOWER/extraction_plan.json
     python -m src.main connectors
     python -m src.main schemas
 
@@ -22,7 +23,7 @@ from typing import List, Optional
 
 from . import APP_NAME, __version__
 from .logging_config import setup_console
-from .validation import ConfigValidationError, export_json_schemas, load_plan, validate_config_file
+from .validation import ConfigValidationError, export_json_schemas, load_plan, plan_warnings, validate_config_file
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -55,6 +56,13 @@ def cmd_validate(args) -> int:
 def cmd_validate_plan(args) -> int:
     plan = load_plan(args.plan)
     print(f"OK: extraction plan '{plan.plan_id}' is valid (approval: {plan.approval.status})")
+    if plan.scoping is not None:
+        counts = {}
+        for row in plan.scoping.requirements_register:
+            counts[row.status] = counts.get(row.status, 0) + 1
+        summary = ", ".join(f"{n} {status.replace('_', ' ')}" for status, n in sorted(counts.items()))
+        print(f"  register: {len(plan.scoping.requirements_register)} row(s) ({summary}); "
+              f"{len(plan.scoping.open_questions())} open question(s)")
     by_status = {}
     for m in plan.indicator_mapping:
         by_status.setdefault(m.verification_status, []).append(m.indicator_code)
@@ -62,6 +70,21 @@ def cmd_validate_plan(args) -> int:
         print(f"  {status}: {', '.join(codes)}")
     for d in plan.outstanding_decisions:
         print(f"  OUTSTANDING: {d}")
+    for w in plan_warnings(plan):
+        print(f"  WARNING: {w}")
+    return 0
+
+
+def cmd_render_plan(args) -> int:
+    from .render import render_plan
+
+    plan = load_plan(args.plan)
+    text = render_plan(plan, plan_warnings(plan))
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+        print(f"written {args.output}")
+    else:
+        sys.stdout.write(text)
     return 0
 
 
@@ -115,6 +138,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("validate-plan", help="validate an extraction plan")
     p.add_argument("--plan", required=True)
     p.set_defaults(func=cmd_validate_plan)
+
+    p = sub.add_parser("render-plan", help="render an extraction plan as readable Markdown")
+    p.add_argument("--plan", required=True)
+    p.add_argument("--output", help="write to this file instead of the console")
+    p.set_defaults(func=cmd_render_plan)
 
     p = sub.add_parser("run", help="validate and execute a configuration")
     p.add_argument("--config", required=True)

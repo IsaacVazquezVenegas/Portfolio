@@ -15,7 +15,7 @@ The LLM never executes anything; the engine never interprets the research questi
 
 ```text
  researcher ──► LLM (LLM_DATA_EXTRACTION_PROTOCOL.md)
-                  │ extraction_plan.json (draft) ──► researcher approves
+                  │ extraction_plan.json (scoping → draft) ──► researcher approves
                   ▼
            extraction_config.yaml
                   │
@@ -45,7 +45,8 @@ The LLM never executes anything; the engine never interprets the research questi
 | `src/transformation.py` | Long-format dataset, harmonisation, missing values, dedup, wide panel |
 | `src/quality.py` | Quality checks |
 | `src/export.py` | File writers (formula-safe Excel, UTF-8-BOM CSV, checksums) |
-| `src/metadata.py` | Data dictionary, manifest, README |
+| `src/metadata.py` | Data dictionary, manifest, README (with the items the plan leaves out) |
+| `src/render.py` | Markdown rendering of an extraction plan (`render-plan`) |
 | `src/extraction.py` | Orchestration |
 | `src/logging_config.py` | Console/file logging with secret redaction |
 | `src/reference/countries.csv` | ISO3/ISO2 reference (World Bank + WHO country lists, 2026-11-19) |

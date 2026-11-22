@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased — Stage 1 in the extraction plan
+
+* The plan gains a `scoping` section: starting point, inputs supplied, scope with its origin, retrieval strategy, Requirements Register, questions with defaults and answers, catalogue look-ups and analytical notes.
+* New approval status `scoping` (before `draft`): a Stage 1 checkpoint is valid with only the `scoping` section. From `draft` on, `research`, `sources`, `indicator_mapping` and `expected_data_structure` are required and no register row may be `ambiguous`.
+* `indicator_mapping[].register_rows` links each indicator to its register rows. `validate-plan` warns about clear rows with no indicator, indicators with no row, rows that still need another source and open questions; these are errors at approval.
+* New `render-plan` command (Markdown version of the plan).
+* The output README lists the parked, dropped and unresolved register rows.
+* The WHO MPOWER plan carries a reconstructed `scoping` section; the Stage 1 worked example has its checkpoint (`docs/examples/WHO_MPOWER_stage1_plan.json`) and rendered version.
+* Plans without a `scoping` section remain valid (with a warning).
+
 ## 1.0.0 — 2026-11-19
 
 Initial implementation of Technical Specification v1.0.

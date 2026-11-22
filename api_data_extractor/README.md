@@ -5,7 +5,7 @@ A configuration-driven Python engine that retrieves observations from official s
 An LLM (ChatGPT, Claude, …) following [`docs/LLM_DATA_EXTRACTION_PROTOCOL.md`](docs/LLM_DATA_EXTRACTION_PROTOCOL.md) helps the researcher find sources and indicators and drafts two files: an **extraction plan** (approved by the researcher) and an **extraction configuration**. Python validates and executes the configuration locally, without any LLM.
 
 ```text
-research question ─► LLM ─► extraction_plan.json ─► researcher approval ─► extraction_config.yaml
+research question ─► LLM ─► extraction_plan.json (scoping → draft) ─► researcher approval ─► extraction_config.yaml
                                                                                    │
                                      python -m src.main run ◄──────────────────────┘
                                                 │
@@ -52,7 +52,10 @@ python -m src.main connectors
 
 ```powershell
 python -m src.main validate-plan --plan projects/WHO_MPOWER/extraction_plan.json
+python -m src.main render-plan --plan projects/WHO_MPOWER/extraction_plan.json --output plan.md
 ```
+
+`render-plan` turns the plan into a readable Markdown document (Stage 1 register, questions, indicators, items left out) for review or for colleagues.
 
 ```powershell
 python -m src.main validate --config projects/WHO_MPOWER/extraction_config.yaml
@@ -87,13 +90,14 @@ Each run writes a new folder `projects/WHO_MPOWER/output/WHO_MPOWER_<timestamp>/
 | `extraction_log.txt` | Execution log |
 | `extraction_manifest.json` | Timestamps, versions, endpoints, parameters, request list, counts, errors, warnings, processing steps, file checksums |
 | `extraction_config.yaml`, `extraction_plan.json` | Snapshots of what was executed |
-| `README.md` | Human-readable summary |
+| `README.md` | Human-readable summary, including the requested items the extraction leaves out (parked or dropped in the plan) |
 
 ## Starting a new project
 
 1. Give the LLM the protocol document and describe your research need.
-2. Save its outputs as `projects/<NAME>/extraction_plan.json` and `projects/<NAME>/extraction_config.yaml`.
-3. `validate-plan`, review, approve; `validate`; `run`.
+2. At the end of scoping, save the Stage 1 checkpoint as `projects/<NAME>/extraction_plan.json` (status `scoping`) and check it with `validate-plan`.
+3. Continue with the LLM until the plan reaches `draft`, and save `projects/<NAME>/extraction_config.yaml`.
+4. `validate-plan` and `render-plan`, review, approve; `validate`; `run`.
 
 The annotated template [`config/extraction_config.yaml`](config/extraction_config.yaml) shows every section (Eurostat + World Bank). The full option list is in [`docs/CONFIGURATION_REFERENCE.md`](docs/CONFIGURATION_REFERENCE.md); the formal schemas are in `schemas/`.
 

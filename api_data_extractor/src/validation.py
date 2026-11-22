@@ -113,6 +113,36 @@ def load_plan(path: Union[str, Path]) -> ExtractionPlan:
     return parse_plan(_load_document(path, "Extraction plan"), str(path))
 
 
+def plan_warnings(plan: ExtractionPlan) -> List[str]:
+    """Traceability problems that do not make the plan invalid but must be shown to the researcher.
+
+    The same conditions are hard errors once the plan is ``approved`` (see
+    :class:`src.models.ExtractionPlan`).
+    """
+    warnings: List[str] = []
+    status = plan.approval.status
+    if plan.scoping is None:
+        if status != "scoping":
+            warnings.append("the plan has no 'scoping' section: Stage 1 (Requirements Register) is not recorded")
+        return warnings
+    scoping = plan.scoping
+    if status == "scoping":
+        for row in scoping.rows_with_status("ambiguous"):
+            warnings.append(f"register row {row.id} ('{row.user_wording}') is still ambiguous")
+        for q in scoping.open_questions():
+            warnings.append(f"question {q.id} is open (default if unanswered: {q.default})")
+        return warnings
+    for row in plan.uncovered_rows():
+        warnings.append(f"register row {row.id} ('{row.user_wording}') is 'clear' but no indicator mapping covers it")
+    for m in plan.unlinked_indicators():
+        warnings.append(f"indicator '{m.indicator_code}' names no register row (register_rows)")
+    for row in scoping.rows_with_status("needs_another_source"):
+        warnings.append(f"register row {row.id} ('{row.user_wording}') still needs another source: {row.reason}")
+    for q in scoping.open_questions():
+        warnings.append(f"question {q.id} is still open")
+    return warnings
+
+
 def check_authentication(config: ExtractionConfig, environ=None) -> List[str]:
     """Return an error for every source whose credential environment variable is not set."""
     environ = os.environ if environ is None else environ
@@ -149,6 +179,7 @@ def check_plan(config: ExtractionConfig, config_path: Path, require_approval: bo
             "the researcher must approve it before execution"
         )
         (errors if require_approval else warnings).append(msg)
+    warnings.extend(f"plan: {w}" for w in plan_warnings(plan))
 
     planned = {(m.source, m.indicator_code) for m in plan.indicator_mapping}
     for task in config.extractions:

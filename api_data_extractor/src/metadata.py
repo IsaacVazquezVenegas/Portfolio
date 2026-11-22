@@ -163,7 +163,13 @@ def manifest(
     }
 
 
-def readme(config: ExtractionConfig, manifest_data: Dict[str, Any], issues: List[QualityIssue], dictionary: pd.DataFrame) -> str:
+def readme(
+    config: ExtractionConfig,
+    manifest_data: Dict[str, Any],
+    issues: List[QualityIssue],
+    dictionary: pd.DataFrame,
+    plan: Optional[ExtractionPlan] = None,
+) -> str:
     lines = [
         f"# {config.project.name} – extraction output",
         "",
@@ -209,6 +215,22 @@ def readme(config: ExtractionConfig, manifest_data: Dict[str, Any], issues: List
         for i in issues:
             if i.level == level:
                 lines.append(f"* **{level.upper()}** [{i.check}] {i.message}")
+    excluded = plan.excluded_rows() if plan else []
+    if excluded:
+        lines += [
+            "",
+            "## Not included in this dataset",
+            "",
+            "Items of the researcher's request that this extraction deliberately leaves out "
+            "(from the Requirements Register in `extraction_plan.json`):",
+            "",
+            "| Row | Researcher's wording | Status | Reason |",
+            "|---|---|---|---|",
+        ]
+        for r in excluded:
+            wording = r.user_wording.replace("|", "/")
+            reason = (r.reason or "").replace("|", "/")
+            lines.append(f"| {r.id} | {wording} | {r.status.replace('_', ' ')} | {reason} |")
     lines += [
         "",
         "## Notes",

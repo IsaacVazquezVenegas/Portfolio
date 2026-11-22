@@ -414,6 +414,164 @@ class ExtractionConfig(StrictModel):
 
 
 # ---------------------------------------------------------------------------
+# Extraction plan, Stage 1: scoping (Requirements Register)
+# ---------------------------------------------------------------------------
+
+REGISTER_ID = r"^R[0-9]{1,4}$"
+QUESTION_ID = r"^Q[0-9]{1,4}$"
+NOTE_ID = r"^A[0-9]{1,4}$"
+
+KindOfData = Literal[
+    "policy",
+    "programme_service",
+    "outcome",
+    "composite_index",
+    "price_tax",
+    "intervention_effect",
+    "other",
+    "unknown",
+]
+RowStatus = Literal["clear", "ambiguous", "needs_another_source", "parked", "dropped"]
+
+#: Register statuses that mean "deliberately not retrieved by this extraction".
+EXCLUDED_ROW_STATUSES = ("parked", "dropped", "needs_another_source")
+
+
+class SuppliedInput(StrictModel):
+    form: Literal["text", "list", "table", "screenshot", "spreadsheet", "indicator_codes", "document", "other"]
+    description: str = Field(min_length=1, description="What the researcher supplied, e.g. 'screenshot of a policy table'.")
+
+
+class ScopeItem(StrictModel):
+    value: str = Field(min_length=1)
+    origin: Literal["stated", "default", "assumed"] = Field(
+        description="stated by the researcher, default of the opening message accepted, or assumed by the LLM."
+    )
+
+
+class ScopingScope(StrictModel):
+    countries: ScopeItem
+    period: ScopeItem
+    breakdown: ScopeItem
+    outputs: ScopeItem
+
+
+class CandidateUnit(StrictModel):
+    """Something that would be requested: a composite score, a bundle (table) or a single indicator."""
+
+    code: str = Field(min_length=1, description="Indicator, table or dataset code; free text if no code exists yet.")
+    level: Literal["composite", "bundle", "single"]
+    source: Optional[str] = Field(None, description="Provider or API, e.g. 'WHO GHO'. Free text: sources are defined in Stage 2.")
+    note: Optional[str] = None
+
+
+class RegisterRow(StrictModel):
+    id: str = Field(pattern=REGISTER_ID)
+    user_wording: Optional[str] = Field(
+        None, description="The researcher's own wording, never rewritten. Required unless origin is 'assumed'."
+    )
+    group: Optional[str] = Field(None, description="The researcher's own grouping (component, theme, sheet...).")
+    interpreted_concept: str = Field(min_length=1)
+    kind_of_data: List[KindOfData] = Field(min_length=1)
+    origin: Literal["stated", "assumed"] = Field(
+        "stated", description="stated: from the researcher's input; assumed: proposed by the LLM (e.g. a context variable)."
+    )
+    candidates: List[CandidateUnit] = Field(default_factory=list, description="Always unverified until Stage 4.")
+    status: RowStatus
+    reason: Optional[str] = Field(None, description="Required for needs_another_source, parked and dropped.")
+    questions: List[str] = Field(default_factory=list, description="ids of the questions about this row.")
+
+    @model_validator(mode="after")
+    def _check(self) -> "RegisterRow":
+        if self.origin == "stated" and not self.user_wording:
+            raise ValueError(f"register row '{self.id}' is stated by the researcher and must keep their 'user_wording'")
+        if self.status in EXCLUDED_ROW_STATUSES and not self.reason:
+            raise ValueError(f"register row '{self.id}' has status '{self.status}' and must give a 'reason'")
+        if self.status == "clear" and not self.candidates:
+            raise ValueError(f"register row '{self.id}' is 'clear' but names no candidate retrieval unit")
+        return self
+
+
+class ScopingQuestion(StrictModel):
+    id: str = Field(pattern=QUESTION_ID)
+    round: int = Field(1, ge=1)
+    text: str = Field(min_length=1)
+    default: str = Field(min_length=1, description="What happens if the researcher does not answer.")
+    rows: List[str] = Field(default_factory=list, description="ids of the register rows the answer affects.")
+    status: Literal["open", "answered", "default_applied"] = "open"
+    answer: Optional[str] = Field(None, description="The researcher's answer, in their words.")
+
+    @model_validator(mode="after")
+    def _check(self) -> "ScopingQuestion":
+        if self.status == "answered" and not self.answer:
+            raise ValueError(f"question '{self.id}' is 'answered' but records no answer")
+        if self.status != "answered" and self.answer:
+            raise ValueError(f"question '{self.id}' records an answer but its status is '{self.status}'")
+        return self
+
+
+class CatalogueLookup(StrictModel):
+    query: str = Field(description="Exact query or URL used.")
+    performed_on: date
+    result: str
+    rows: List[str] = Field(default_factory=list, description="ids of the register rows it informed.")
+
+
+class AnalyticalNote(StrictModel):
+    id: str = Field(pattern=NOTE_ID)
+    note: str = Field(min_length=1)
+    rows: List[str] = Field(default_factory=list)
+
+
+class Scoping(StrictModel):
+    """Stage 1 record: how the request started and how every item was decided."""
+
+    starting_point: Literal["A", "B", "C"] = Field(
+        description="A: codes known; B: source known by name or description; C: research question only."
+    )
+    inputs: List[SuppliedInput] = Field(min_length=1)
+    purpose: Optional[str] = None
+    scope: ScopingScope
+    retrieval_strategy: Optional[str] = Field(None, description="Which composites, bundles and single indicators, and why.")
+    requirements_register: List[RegisterRow] = Field(min_length=1, description="One row per item to retrieve.")
+    questions: List[ScopingQuestion] = Field(default_factory=list)
+    catalogue_lookups: List[CatalogueLookup] = Field(default_factory=list)
+    analytical_notes: List[AnalyticalNote] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _references(self) -> "Scoping":
+        for kind, items in (("register row", self.requirements_register), ("question", self.questions),
+                            ("analytical note", self.analytical_notes)):
+            ids = [i.id for i in items]
+            dupes = sorted({i for i in ids if ids.count(i) > 1})
+            if dupes:
+                raise ValueError(f"duplicate {kind} id(s) {dupes}")
+        rows = self.row_ids()
+        questions = {q.id for q in self.questions}
+        refs = [(f"question '{q.id}'", q.rows) for q in self.questions]
+        refs += [(f"analytical note '{n.id}'", n.rows) for n in self.analytical_notes]
+        refs += [(f"catalogue look-up '{c.query}'", c.rows) for c in self.catalogue_lookups]
+        for owner, ids in refs:
+            unknown = sorted(set(ids) - rows)
+            if unknown:
+                raise ValueError(f"{owner} refers to unknown register row(s) {unknown}")
+        for row in self.requirements_register:
+            unknown = sorted(set(row.questions) - questions)
+            if unknown:
+                raise ValueError(f"register row '{row.id}' refers to unknown question(s) {unknown}")
+        return self
+
+    def row_ids(self) -> set:
+        return {r.id for r in self.requirements_register}
+
+    def rows_with_status(self, *statuses: str) -> List[RegisterRow]:
+        return [r for r in self.requirements_register if r.status in statuses]
+
+    def open_questions(self) -> List[ScopingQuestion]:
+        return [q for q in self.questions if q.status == "open"]
+
+
+# ---------------------------------------------------------------------------
 # Extraction plan (produced by the LLM, approved by the researcher)
 # ---------------------------------------------------------------------------
 
@@ -458,6 +616,9 @@ class VerificationEvidence(StrictModel):
 
 class IndicatorMapping(StrictModel):
     research_variable: str
+    register_rows: List[str] = Field(
+        default_factory=list, description="ids of the Stage 1 register rows this indicator answers (e.g. ['R5', 'R6'])."
+    )
     source: str
     indicator_code: str
     official_name: str
@@ -483,8 +644,15 @@ class IndicatorMapping(StrictModel):
         return self
 
 
+PlanStatus = Literal["scoping", "draft", "approved", "rejected"]
+
+
 class Approval(StrictModel):
-    status: Literal["draft", "approved", "rejected"] = "draft"
+    status: PlanStatus = Field(
+        "draft",
+        description="scoping: Stage 1 checkpoint (only 'scoping' is required); draft: full plan awaiting review; "
+        "approved / rejected: recorded by the researcher.",
+    )
     approved_by: Optional[str] = None
     approved_on: Optional[date] = None
     notes: Optional[str] = None
@@ -501,20 +669,89 @@ class ExtractionPlan(StrictModel):
     plan_id: str = Field(pattern=PROJECT_NAME)
     created: date
     prepared_by: str = Field(description="Who prepared the plan, e.g. 'LLM (model name) with researcher'.")
-    research: ResearchRequirements
-    sources: List[PlanSource] = Field(min_length=1)
-    indicator_mapping: List[IndicatorMapping] = Field(min_length=1)
-    expected_data_structure: str
+    scoping: Optional[Scoping] = Field(
+        None, description="Stage 1 record (Requirements Register). Required when approval.status is 'scoping'."
+    )
+    research: Optional[ResearchRequirements] = Field(None, description="Required from status 'draft' on.")
+    sources: List[PlanSource] = Field(default_factory=list, description="At least one from status 'draft' on.")
+    indicator_mapping: List[IndicatorMapping] = Field(
+        default_factory=list, description="At least one from status 'draft' on."
+    )
+    expected_data_structure: Optional[str] = Field(None, description="Required from status 'draft' on.")
     known_limitations: List[str] = Field(default_factory=list)
     outstanding_decisions: List[str] = Field(default_factory=list)
     approval: Approval = Field(default_factory=Approval)
 
     @model_validator(mode="after")
     def _cross(self) -> "ExtractionPlan":
+        status = self.approval.status
+        if status == "scoping":
+            if self.scoping is None:
+                raise ValueError("a plan at status 'scoping' must contain the 'scoping' section")
+        else:
+            missing = [name for name in ("research", "expected_data_structure") if getattr(self, name) is None]
+            missing += [name for name in ("sources", "indicator_mapping") if not getattr(self, name)]
+            if missing:
+                raise ValueError(
+                    f"a plan at status '{status}' requires {missing}; "
+                    "use status 'scoping' for a Stage 1 checkpoint"
+                )
         ids = {s.id for s in self.sources}
         for m in self.indicator_mapping:
             if m.source not in ids:
                 raise ValueError(f"indicator mapping '{m.indicator_code}' refers to unknown source '{m.source}'")
-        if self.approval.status == "approved" and self.outstanding_decisions:
+        if self.scoping is not None:
+            rows = self.scoping.row_ids()
+            for m in self.indicator_mapping:
+                unknown = sorted(set(m.register_rows) - rows)
+                if unknown:
+                    raise ValueError(
+                        f"indicator mapping '{m.indicator_code}' refers to unknown register row(s) {unknown}"
+                    )
+            if status != "scoping":
+                ambiguous = [r.id for r in self.scoping.rows_with_status("ambiguous")]
+                if ambiguous:
+                    raise ValueError(
+                        f"register row(s) {ambiguous} are still 'ambiguous': Stage 1 must be finished "
+                        f"before status '{status}'"
+                    )
+            if status == "approved":
+                unresolved = [r.id for r in self.scoping.rows_with_status("needs_another_source")]
+                if unresolved:
+                    raise ValueError(
+                        f"register row(s) {unresolved} still 'need another source': map them to an indicator, "
+                        "or mark them 'parked' or 'dropped', before approval"
+                    )
+                open_q = [q.id for q in self.scoping.open_questions()]
+                if open_q:
+                    raise ValueError(f"a plan cannot be approved while scoping question(s) {open_q} are open")
+                uncovered = [r.id for r in self.uncovered_rows()]
+                if uncovered:
+                    raise ValueError(f"register row(s) {uncovered} are 'clear' but no indicator mapping covers them")
+                unlinked = [m.indicator_code for m in self.unlinked_indicators()]
+                if unlinked:
+                    raise ValueError(f"indicator(s) {unlinked} name no register row (register_rows)")
+        if status == "approved" and self.outstanding_decisions:
             raise ValueError("a plan cannot be approved while outstanding_decisions remain")
         return self
+
+    # -- traceability between Stage 1 and the indicator mapping -------------
+
+    def uncovered_rows(self) -> List[RegisterRow]:
+        """Register rows marked clear that no indicator mapping covers."""
+        if self.scoping is None:
+            return []
+        covered = {r for m in self.indicator_mapping for r in m.register_rows}
+        return [r for r in self.scoping.rows_with_status("clear") if r.id not in covered]
+
+    def unlinked_indicators(self) -> List[IndicatorMapping]:
+        """Indicator mappings that name no register row (only meaningful when a scoping section exists)."""
+        if self.scoping is None:
+            return []
+        return [m for m in self.indicator_mapping if not m.register_rows]
+
+    def excluded_rows(self) -> List[RegisterRow]:
+        """Rows deliberately left out of the extraction (parked, dropped, needing another source)."""
+        if self.scoping is None:
+            return []
+        return self.scoping.rows_with_status(*EXCLUDED_ROW_STATUSES)

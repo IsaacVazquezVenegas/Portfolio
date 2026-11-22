@@ -2,12 +2,42 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "api_data_extractor/ExtractionPlan/1.0",
   "$defs": {
+    "AnalyticalNote": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^A[0-9]{1,4}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "note": {
+          "minLength": 1,
+          "title": "Note",
+          "type": "string"
+        },
+        "rows": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "note"
+      ],
+      "title": "AnalyticalNote",
+      "type": "object"
+    },
     "Approval": {
       "additionalProperties": false,
       "properties": {
         "status": {
           "default": "draft",
+          "description": "scoping: Stage 1 checkpoint (only 'scoping' is required); draft: full plan awaiting review; approved / rejected: recorded by the researcher.",
           "enum": [
+            "scoping",
             "draft",
             "approved",
             "rejected"
@@ -56,12 +86,106 @@
       "title": "Approval",
       "type": "object"
     },
+    "CandidateUnit": {
+      "additionalProperties": false,
+      "description": "Something that would be requested: a composite score, a bundle (table) or a single indicator.",
+      "properties": {
+        "code": {
+          "description": "Indicator, table or dataset code; free text if no code exists yet.",
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "composite",
+            "bundle",
+            "single"
+          ],
+          "title": "Level",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Provider or API, e.g. 'WHO GHO'. Free text: sources are defined in Stage 2.",
+          "title": "Source"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        }
+      },
+      "required": [
+        "code",
+        "level"
+      ],
+      "title": "CandidateUnit",
+      "type": "object"
+    },
+    "CatalogueLookup": {
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "description": "Exact query or URL used.",
+          "title": "Query",
+          "type": "string"
+        },
+        "performed_on": {
+          "format": "date",
+          "title": "Performed On",
+          "type": "string"
+        },
+        "result": {
+          "title": "Result",
+          "type": "string"
+        },
+        "rows": {
+          "description": "ids of the register rows it informed.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rows",
+          "type": "array"
+        }
+      },
+      "required": [
+        "query",
+        "performed_on",
+        "result"
+      ],
+      "title": "CatalogueLookup",
+      "type": "object"
+    },
     "IndicatorMapping": {
       "additionalProperties": false,
       "properties": {
         "research_variable": {
           "title": "Research Variable",
           "type": "string"
+        },
+        "register_rows": {
+          "description": "ids of the Stage 1 register rows this indicator answers (e.g. ['R5', 'R6']).",
+          "items": {
+            "type": "string"
+          },
+          "title": "Register Rows",
+          "type": "array"
         },
         "source": {
           "title": "Source",
@@ -321,6 +445,123 @@
       "title": "PlanSource",
       "type": "object"
     },
+    "RegisterRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^R[0-9]{1,4}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "user_wording": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The researcher's own wording, never rewritten. Required unless origin is 'assumed'.",
+          "title": "User Wording"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The researcher's own grouping (component, theme, sheet...).",
+          "title": "Group"
+        },
+        "interpreted_concept": {
+          "minLength": 1,
+          "title": "Interpreted Concept",
+          "type": "string"
+        },
+        "kind_of_data": {
+          "items": {
+            "enum": [
+              "policy",
+              "programme_service",
+              "outcome",
+              "composite_index",
+              "price_tax",
+              "intervention_effect",
+              "other",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Kind Of Data",
+          "type": "array"
+        },
+        "origin": {
+          "default": "stated",
+          "description": "stated: from the researcher's input; assumed: proposed by the LLM (e.g. a context variable).",
+          "enum": [
+            "stated",
+            "assumed"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "candidates": {
+          "description": "Always unverified until Stage 4.",
+          "items": {
+            "$ref": "#/$defs/CandidateUnit"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "clear",
+            "ambiguous",
+            "needs_another_source",
+            "parked",
+            "dropped"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Required for needs_another_source, parked and dropped.",
+          "title": "Reason"
+        },
+        "questions": {
+          "description": "ids of the questions about this row.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Questions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "interpreted_concept",
+        "kind_of_data",
+        "status"
+      ],
+      "title": "RegisterRow",
+      "type": "object"
+    },
     "ResearchRequirements": {
       "additionalProperties": false,
       "properties": {
@@ -399,6 +640,243 @@
       "title": "ResearchRequirements",
       "type": "object"
     },
+    "ScopeItem": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        },
+        "origin": {
+          "description": "stated by the researcher, default of the opening message accepted, or assumed by the LLM.",
+          "enum": [
+            "stated",
+            "default",
+            "assumed"
+          ],
+          "title": "Origin",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "origin"
+      ],
+      "title": "ScopeItem",
+      "type": "object"
+    },
+    "Scoping": {
+      "additionalProperties": false,
+      "description": "Stage 1 record: how the request started and how every item was decided.",
+      "properties": {
+        "starting_point": {
+          "description": "A: codes known; B: source known by name or description; C: research question only.",
+          "enum": [
+            "A",
+            "B",
+            "C"
+          ],
+          "title": "Starting Point",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/SuppliedInput"
+          },
+          "minItems": 1,
+          "title": "Inputs",
+          "type": "array"
+        },
+        "purpose": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Purpose"
+        },
+        "scope": {
+          "$ref": "#/$defs/ScopingScope"
+        },
+        "retrieval_strategy": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Which composites, bundles and single indicators, and why.",
+          "title": "Retrieval Strategy"
+        },
+        "requirements_register": {
+          "description": "One row per item to retrieve.",
+          "items": {
+            "$ref": "#/$defs/RegisterRow"
+          },
+          "minItems": 1,
+          "title": "Requirements Register",
+          "type": "array"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/$defs/ScopingQuestion"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "catalogue_lookups": {
+          "items": {
+            "$ref": "#/$defs/CatalogueLookup"
+          },
+          "title": "Catalogue Lookups",
+          "type": "array"
+        },
+        "analytical_notes": {
+          "items": {
+            "$ref": "#/$defs/AnalyticalNote"
+          },
+          "title": "Analytical Notes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "starting_point",
+        "inputs",
+        "scope",
+        "requirements_register"
+      ],
+      "title": "Scoping",
+      "type": "object"
+    },
+    "ScopingQuestion": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^Q[0-9]{1,4}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "round": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Round",
+          "type": "integer"
+        },
+        "text": {
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "default": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What happens if the researcher does not answer.",
+          "title": "Default"
+        },
+        "rows": {
+          "description": "ids of the register rows the answer affects.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "status": {
+          "default": "open",
+          "enum": [
+            "open",
+            "answered",
+            "default_applied"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "answer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "The researcher's answer, in their words.",
+          "title": "Answer"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "default"
+      ],
+      "title": "ScopingQuestion",
+      "type": "object"
+    },
+    "ScopingScope": {
+      "additionalProperties": false,
+      "properties": {
+        "countries": {
+          "$ref": "#/$defs/ScopeItem"
+        },
+        "period": {
+          "$ref": "#/$defs/ScopeItem"
+        },
+        "breakdown": {
+          "$ref": "#/$defs/ScopeItem"
+        },
+        "outputs": {
+          "$ref": "#/$defs/ScopeItem"
+        }
+      },
+      "required": [
+        "countries",
+        "period",
+        "breakdown",
+        "outputs"
+      ],
+      "title": "ScopingScope",
+      "type": "object"
+    },
+    "SuppliedInput": {
+      "additionalProperties": false,
+      "properties": {
+        "form": {
+          "enum": [
+            "text",
+            "list",
+            "table",
+            "screenshot",
+            "spreadsheet",
+            "indicator_codes",
+            "document",
+            "other"
+          ],
+          "title": "Form",
+          "type": "string"
+        },
+        "description": {
+          "description": "What the researcher supplied, e.g. 'screenshot of a policy table'.",
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": [
+        "form",
+        "description"
+      ],
+      "title": "SuppliedInput",
+      "type": "object"
+    },
     "VerificationEvidence": {
       "additionalProperties": false,
       "properties": {
@@ -450,28 +928,58 @@
       "title": "Prepared By",
       "type": "string"
     },
+    "scoping": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Scoping"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Stage 1 record (Requirements Register). Required when approval.status is 'scoping'."
+    },
     "research": {
-      "$ref": "#/$defs/ResearchRequirements"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ResearchRequirements"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Required from status 'draft' on."
     },
     "sources": {
+      "description": "At least one from status 'draft' on.",
       "items": {
         "$ref": "#/$defs/PlanSource"
       },
-      "minItems": 1,
       "title": "Sources",
       "type": "array"
     },
     "indicator_mapping": {
+      "description": "At least one from status 'draft' on.",
       "items": {
         "$ref": "#/$defs/IndicatorMapping"
       },
-      "minItems": 1,
       "title": "Indicator Mapping",
       "type": "array"
     },
     "expected_data_structure": {
-      "title": "Expected Data Structure",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Required from status 'draft' on.",
+      "title": "Expected Data Structure"
     },
     "known_limitations": {
       "items": {
@@ -494,11 +1002,7 @@
   "required": [
     "plan_id",
     "created",
-    "prepared_by",
-    "research",
-    "sources",
-    "indicator_mapping",
-    "expected_data_structure"
+    "prepared_by"
   ],
   "title": "Extraction plan",
   "type": "object"
