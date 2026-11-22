@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased — Data views and missing-value codes
+
+* Plans record how each source codes missing values (`missing_value_codes`: `no_data`, `not_applicable`, `category`, with evidence). Validation fails when a `no_data` code is not in `processing.missing_values.markers`, and warns about sources with no recorded codes. New `value-codes --run DIR` command lists a run's text codes and proposes plan entries.
+* Indicators gain a short `label` (plan and configuration). The wide CSV and the `wide_panel` sheet use readable column names, with the codes in the first data row.
+* `page-export` writes `views.json` (+ parts). The page's Data tab has four views (Series, By year, By indicator, By country) and charts chosen from the data's shape (rank, dumbbell, distribution, categories, changes, stacked). An optional `view_spec.json`, written by Claude on request, overrides the engine's choices.
+
 ## Unreleased — Large runs on the Data Fetcher page
 
 * `page-export` publishes CSV files above 12 MB (`dataset.csv`, `dataset_wide.csv`, large workbook sheets) as parts with the header repeated; the page joins them for the row preview and on download (`build: join_csv`, sheet `csv_parts`).

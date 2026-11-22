@@ -199,6 +199,20 @@
           "description": "Official indicator name, checked against source metadata.",
           "title": "Name"
         },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short human-readable label used as column name in the wide view and on the page (default: name).",
+          "title": "Label"
+        },
         "definition": {
           "anyOf": [
             {

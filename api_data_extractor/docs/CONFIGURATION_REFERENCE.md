@@ -86,7 +86,7 @@ Placeholders are replaced textually; nothing is evaluated.
 |---|---|---|
 | `id` | – | |
 | `source` | – | A `sources[].id` |
-| `indicators[]` | – | `code` (required), `name`, `definition`, `unit`, `category`, `measurement_scale`, `filters` |
+| `indicators[]` | – | `code` (required), `name`, `label` (short readable name for the wide view and the page, at most 120 characters), `definition`, `unit`, `category`, `measurement_scale`, `filters` |
 | `countries` | – | `all` or list of codes **in the source's coding** (upper case) |
 | `start_year`, `end_year` | – | Inclusive; `end_year ≥ start_year` |
 | `frequency` | `annual` | `annual`, `quarterly`, `monthly`, `any` (`any` disables year-gap reporting) |
@@ -112,9 +112,9 @@ Connector-specific filters:
 | `numeric_values` | `source_numeric_only` | `parse_plain_numbers` also converts text such as `"4"` to `4.0` — only use it if the researcher wants ordinal categories treated as numbers |
 | `standardise_periods` | `true` | `YYYY`, `YYYY-Qn`, `YYYY-MM`, `YYYY-MM-DD` |
 | `missing_values.treatment` | `keep` | `keep` flags rows (`missing = True`); `drop` removes them (counted) |
-| `missing_values.markers` | `[]` | Text values meaning "no data" (e.g. `".."`) |
+| `missing_values.markers` | `[]` | Text values meaning "no data" (e.g. `". . ."`). Must include every code the plan classifies as `no_data` in `missing_value_codes` |
 | `deduplicate` | `true` | Removes **exact** duplicates; same identity with different values is only flagged (`duplicate_conflict`) |
-| `wide_panel` | `false` | Adds `dataset_wide.csv` / `wide_panel` sheet: one row per country-period, one column per `source:indicator [dimensions]` |
+| `wide_panel` | `false` | Adds `dataset_wide.csv` / `wide_panel` sheet: one row per country-period, one column per series. Column names are readable (`label`, or `name`, then dimension labels joined with " · "); the first data row holds the codes (`source:indicator [dimensions]`) |
 
 Never applied: interpolation, imputation, scoring of categories, merging different indicators.
 

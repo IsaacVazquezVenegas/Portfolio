@@ -1,372 +1,541 @@
 # WHO MPOWER, all indicators, EU and OECD countries, report years 2022 and 2024.
 # Generated from extraction_plan.json (plan_id WHO_MPOWER_policies). Validate with:
 #   python -m src.main validate --config projects/WHO_MPOWER_policies/extraction_config.yaml
-schema_version: "1.0"
 
+schema_version: '1.0'
 project:
   name: WHO_MPOWER_policies
-  description: >-
-    All 33 WHO MPOWER tables and the 22 P and E compliance scores for the 43 EU and
-    OECD countries, report years 2022 and 2024, with age-standardised tobacco use
-    prevalence for context.
-  version: "1.0.0"
+  description: All 33 WHO MPOWER tables and the 22 P and E compliance scores for the 43 EU and OECD countries, report years
+    2022 and 2024, with age-standardised tobacco use prevalence for context.
+  version: 1.1.0
   created: 2026-11-22
   extraction_plan: extraction_plan.json
-
 sources:
-  - id: who_gho
-    provider: World Health Organization
-    api_name: Global Health Observatory OData API
-    api_type: odata
-    connector: who_gho
-    base_url: https://ghoapi.azureedge.net/api
-    documentation_url: https://www.who.int/data/gho/info/gho-odata-api
-    authentication:
-      method: none
-    request:
-      timeout_seconds: 90
-      max_retries: 3
-      backoff_seconds: 2
-      min_interval_seconds: 0.5
-
+- id: who_gho
+  provider: World Health Organization
+  api_name: Global Health Observatory OData API
+  api_type: odata
+  connector: who_gho
+  base_url: https://ghoapi.azureedge.net/api
+  documentation_url: https://www.who.int/data/gho/info/gho-odata-api
+  authentication:
+    method: none
+  request:
+    timeout_seconds: 90
+    max_retries: 3
+    backoff_seconds: 2
+    min_interval_seconds: 0.5
 extractions:
-  - id: mpower_tables
-    source: who_gho
-    countries: [AUT, BEL, BGR, HRV, CYP, CZE, DNK, EST, FIN, FRA, DEU, GRC, HUN, IRL, ITA, LVA, LTU, LUX, MLT, NLD, POL, PRT, ROU, SVK, SVN, ESP, SWE, AUS, CAN, CHL, COL, CRI, ISL, ISR, JPN, KOR, MEX, NZL, NOR, CHE, TUR, GBR, USA]
-    start_year: 2022
-    end_year: 2024
-    frequency: any
-    filters:
-      SpatialDimType: COUNTRY
-    indicators:
-      - code: TOBACCO_MPOWER_E1_DIRECTADBANS
-        name: "Tobacco Enforce bans: E1 direct advertising"
-        category: "E - Enforce"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_E2_INDIRECTADBANS
-        name: "Tobacco Enforce bans: E2 indirect advertising"
-        category: "E - Enforce"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS
-        name: "Tobacco Enforce bans: E3 indirect advertising, additional bans"
-        category: "E - Enforce"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M1_PREVALENCE
-        name: "Tobacco Monitor: population-based national surveys, tobacco use and smoking, prevalence"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M1_TOBACCOUSESMOKING
-        name: "Tobacco Monitor: population-based national surveys, tobacco use and smoking"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M2_PREVALENCE
-        name: "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes, prevalence"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M2_SMOKELESSECIGARETTES
-        name: "Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M3_PREVALENCE
-        name: "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking, prevalence"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M3_TOBACCOUSESMOKINGSCHOOL
-        name: "Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M4_PREVALENCE
-        name: "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes, prevalence"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_M4_SMOKELESSECIGARETTESSCHOOL
-        name: "Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes"
-        category: "M - Monitor"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_NTCP
-        name: "Tobacco MPOWER: National tobacco control programmes (NTCP)"
-        category: "NTCP"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_O1_TREATMENTSUPPORT
-        name: "Tobacco Offer help: O1 Support for treatment of tobacco dependence / Availability of smoking cessation support"
-        category: "Overview (composites)"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY
-        name: "Tobacco Offer help: O2 Availability of tobacco cessation medications"
-        category: "Overview (composites)"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_OVERVIEW
-        name: "Tobacco MPOWER overview: Monitor, Protect people, Offer help, Warn of dangers, Enforce bans, Raise taxes"
-        category: "Overview (composites)"
-        measurement_scale: ordinal
-        unit: "MPOWER group level 1-5 (ordinal category)"
-      - code: TOBACCO_MPOWER_P1_SMOKEFREEPLACES
-        name: "Tobacco MPOWER Protect people: P1 smoke-free places (national legislation)"
-        category: "P - Protect"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS
-        name: "Tobacco MPOWER Protect people: P2 smoke-free places, additional characteristics"
-        category: "P - Protect"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_AFFORDABILITY
-        name: "Tobacco Raise taxes: Affordability"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_EARMARKED
-        name: "Tobacco Raise taxes:  Reported use of earmarked tobacco taxes"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_INFLATIONADJUSTEDPRICES
-        name: "Tobacco Raise taxes: Inflation-adjusted prices for most sold brand of cigarettes"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_PRICE
-        name: "Tobacco Raise taxes: Retail price for tobacco and nicotine products"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_TAX
-        name: "Tobacco Raise taxes: National taxes for tobacco and nicotine products"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_TAXADMINISTRATION
-        name: "Tobacco Raise taxes: Tax administration"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_TAXREVENUELATEST
-        name: "Tobacco Raise taxes: Annual tax revenues from tobacco products, latest reporting period"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_TAXREVENUEPREVIOUS
-        name: "Tobacco Raise taxes: Annual tax revenues from tobacco products, previous reporting period"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_R_TAXSTRUCTURE
-        name: "Tobacco Raise taxes: Tobacco tax structure"
-        category: "R - Raise taxes"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W1A_CIGARETTES
-        name: "Tobacco Warning: W1a cigarette packaging health warnings"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W1B_TOBACCOSMOKED
-        name: "Tobacco Warning: W1b smoked tobacco packaging health warnings"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W1C_TOBACCOSMOKELESS
-        name: "Tobacco Warning: W1c smokeless tobacco packaging health warnings"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W2A_CIGARETTES
-        name: "Tobacco Warning: W2a cigarette packaging health warnings, other characteristics"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W2B_TOBACCOSMOKED
-        name: "Tobacco Warning: W2b smoked tobacco packaging health warnings, other characteristics"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W2C_TOBACCOSMOKELESS
-        name: "Tobacco Warning: W2c smokeless tobacco packaging health warnings, other characteristics"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-      - code: TOBACCO_MPOWER_W3_MASSMEDIA
-        name: "Tobacco Warning: W3 anti-tobacco mass-media campaigns"
-        category: "W - Warn"
-        measurement_scale: text
-        unit: "Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension"
-
-  - id: compliance_scores
-    source: who_gho
-    countries: [AUT, BEL, BGR, HRV, CYP, CZE, DNK, EST, FIN, FRA, DEU, GRC, HUN, IRL, ITA, LVA, LTU, LUX, MLT, NLD, POL, PRT, ROU, SVK, SVN, ESP, SWE, AUS, CAN, CHL, COL, CRI, ISL, ISR, JPN, KOR, MEX, NZL, NOR, CHE, TUR, GBR, USA]
-    start_year: 2022
-    end_year: 2024
-    frequency: any
-    filters:
-      SpatialDimType: COUNTRY
-    indicators:
-      - code: E_compl_all_dir
-        name: "Overall compliance with bans on direct advertising (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e1
-        name: "Compliance with ban on advertising on national television and radio (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e10
-        name: "Compliance with ban on promotional discounts (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e11
-        name: "Compliance with ban on use of brand name of non-tobacco product for tobacco product (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e12
-        name: "Compliance with ban on indentifying non-tobacco products with tobacco brand names (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e13
-        name: "Compliance with ban on appearance of tobacco brands in TV and/or films (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e14
-        name: "Compliance with ban on appearance of tobacco products in TV and/or films (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e15
-        name: "Compliance with ban on sponsorship (contributions and/or publicity of contributions) (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e3
-        name: "Compliance with ban on advertising in local magazines and newspapers (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e5
-        name: "Compliance with ban on billboard and outdoor advertising (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e6
-        name: "Compliance with ban on advertising at point of sale (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e9
-        name: "Compliance with ban on free distribution in mail or through other means (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: E_compl_e_all_indir
-        name: "Overall compliance with bans on promotion and sponsorship (score)"
-        category: "E - Enforce (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_all_sfe
-        name: "Overall compliance with regulations on smoke-free environments (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p1
-        name: "Compliance with smoke-free health-care facilities law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p2
-        name: "Compliance with smoke-free education facilities except universities law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p3
-        name: "Compliance with smoke-free universities law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p4
-        name: "Compliance with smoke-free government facilities law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p5
-        name: "Compliance with smoke-free indoor offices law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p6
-        name: "Compliance with smoke-free restaurants law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p7
-        name: "Compliance with smoke-free pubs and bars law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-      - code: P_compl_p8
-        name: "Compliance with smoke-free public transport law (score)"
-        category: "P - Protect (compliance)"
-        measurement_scale: ordinal
-        unit: "Compliance score 0-10 (expert assessment)"
-
-  - id: prevalence_2022
-    source: who_gho
-    countries: [AUT, BEL, BGR, HRV, CYP, CZE, DNK, EST, FIN, FRA, DEU, GRC, HUN, IRL, ITA, LVA, LTU, LUX, MLT, NLD, POL, PRT, ROU, SVK, SVN, ESP, SWE, AUS, CAN, CHL, COL, CRI, ISL, ISR, JPN, KOR, MEX, NZL, NOR, CHE, TUR, GBR, USA]
-    start_year: 2022
-    end_year: 2022
-    frequency: any
-    filters:
-      SpatialDimType: COUNTRY
-    indicators:
-      - code: M_Est_tob_curr_std
-        name: "Estimate of current tobacco use prevalence (%) (age-standardized)"
-        category: "Context - prevalence"
-        measurement_scale: ratio
-        definition: "Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised."
-        unit: "% of population aged 15+"
-
-  - id: prevalence_2024
-    source: who_gho
-    countries: [AUT, BEL, BGR, HRV, CYP, CZE, DNK, EST, FIN, FRA, DEU, GRC, HUN, IRL, ITA, LVA, LTU, LUX, MLT, NLD, POL, PRT, ROU, SVK, SVN, ESP, SWE, AUS, CAN, CHL, COL, CRI, ISL, ISR, JPN, KOR, MEX, NZL, NOR, CHE, TUR, GBR, USA]
-    start_year: 2024
-    end_year: 2024
-    frequency: any
-    filters:
-      SpatialDimType: COUNTRY
-    indicators:
-      - code: M_Est_tob_curr_std
-        name: "Estimate of current tobacco use prevalence (%) (age-standardized)"
-        category: "Context - prevalence"
-        measurement_scale: ratio
-        definition: "Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised."
-        unit: "% of population aged 15+"
-
+- id: mpower_tables_and_compliance
+  source: who_gho
+  countries:
+  - AUT
+  - BEL
+  - BGR
+  - HRV
+  - CYP
+  - CZE
+  - DNK
+  - EST
+  - FIN
+  - FRA
+  - DEU
+  - GRC
+  - HUN
+  - IRL
+  - ITA
+  - LVA
+  - LTU
+  - LUX
+  - MLT
+  - NLD
+  - POL
+  - PRT
+  - ROU
+  - SVK
+  - SVN
+  - ESP
+  - SWE
+  - AUS
+  - CAN
+  - CHL
+  - COL
+  - CRI
+  - ISL
+  - ISR
+  - JPN
+  - KOR
+  - MEX
+  - NZL
+  - NOR
+  - CHE
+  - TUR
+  - GBR
+  - USA
+  start_year: 2022
+  end_year: 2024
+  frequency: any
+  filters:
+    SpatialDimType: COUNTRY
+  indicators:
+  - code: TOBACCO_MPOWER_OVERVIEW
+    name: 'Tobacco MPOWER overview: Monitor, Protect people, Offer help, Warn of dangers, Enforce bans, Raise taxes'
+    label: MPOWER overview (group levels 1-5)
+    category: Overview (composites)
+    measurement_scale: ordinal
+    unit: MPOWER group level 1-5 (ordinal category)
+  - code: TOBACCO_MPOWER_M1_TOBACCOUSESMOKING
+    name: 'Tobacco Monitor: population-based national surveys, tobacco use and smoking'
+    label: 'M1 Adult surveys: tobacco use and smoking'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M1_PREVALENCE
+    name: 'Tobacco Monitor: population-based national surveys, tobacco use and smoking, prevalence'
+    label: 'M1 Adult surveys: prevalence'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M2_SMOKELESSECIGARETTES
+    name: 'Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes'
+    label: 'M2 Adult surveys: smokeless and e-cigarettes'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M2_PREVALENCE
+    name: 'Tobacco Monitor: population-based national surveys, smokeless tobacco or e-cigarettes, prevalence'
+    label: 'M2 Adult surveys: smokeless and e-cigarette prevalence'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M3_TOBACCOUSESMOKINGSCHOOL
+    name: 'Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking'
+    label: 'M3 School surveys: tobacco use and smoking'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M3_PREVALENCE
+    name: 'Tobacco Monitor: school-based national surveys, tobacco use, tobacco smoking, and cigarette smoking, prevalence'
+    label: 'M3 School surveys: prevalence'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M4_SMOKELESSECIGARETTESSCHOOL
+    name: 'Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes'
+    label: 'M4 School surveys: smokeless and e-cigarettes'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_M4_PREVALENCE
+    name: 'Tobacco Monitor: school-based national surveys, smokeless tobacco or e-cigarettes, prevalence'
+    label: 'M4 School surveys: smokeless and e-cigarette prevalence'
+    category: M - Monitor
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_P1_SMOKEFREEPLACES
+    name: 'Tobacco MPOWER Protect people: P1 smoke-free places (national legislation)'
+    label: P1 Smoke-free places (legislation)
+    category: P - Protect
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_P2_SMOKEFREEPLACEDETAILS
+    name: 'Tobacco MPOWER Protect people: P2 smoke-free places, additional characteristics'
+    label: 'P2 Smoke-free places: other characteristics'
+    category: P - Protect
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: P_compl_all_sfe
+    name: Overall compliance with regulations on smoke-free environments (score)
+    label: 'Overall compliance: regulations on smoke-free environments (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p1
+    name: Compliance with smoke-free health-care facilities law (score)
+    label: 'Compliance: smoke-free health-care facilities law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p2
+    name: Compliance with smoke-free education facilities except universities law (score)
+    label: 'Compliance: smoke-free education facilities except universities law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p3
+    name: Compliance with smoke-free universities law (score)
+    label: 'Compliance: smoke-free universities law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p4
+    name: Compliance with smoke-free government facilities law (score)
+    label: 'Compliance: smoke-free government facilities law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p5
+    name: Compliance with smoke-free indoor offices law (score)
+    label: 'Compliance: smoke-free indoor offices law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p6
+    name: Compliance with smoke-free restaurants law (score)
+    label: 'Compliance: smoke-free restaurants law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p7
+    name: Compliance with smoke-free pubs and bars law (score)
+    label: 'Compliance: smoke-free pubs and bars law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: P_compl_p8
+    name: Compliance with smoke-free public transport law (score)
+    label: 'Compliance: smoke-free public transport law (0-10)'
+    category: P - Protect (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: TOBACCO_MPOWER_O1_TREATMENTSUPPORT
+    name: 'Tobacco Offer help: O1 Support for treatment of tobacco dependence / Availability of smoking cessation support'
+    label: O1 Cessation support
+    category: O - Offer help
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_O2_MEDICATIONAVAILABILITY
+    name: 'Tobacco Offer help: O2 Availability of tobacco cessation medications'
+    label: O2 Cessation medicines
+    category: O - Offer help
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W1A_CIGARETTES
+    name: 'Tobacco Warning: W1a cigarette packaging health warnings'
+    label: 'W1a Pack warnings: cigarettes'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W1B_TOBACCOSMOKED
+    name: 'Tobacco Warning: W1b smoked tobacco packaging health warnings'
+    label: 'W1b Pack warnings: other smoked tobacco'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W1C_TOBACCOSMOKELESS
+    name: 'Tobacco Warning: W1c smokeless tobacco packaging health warnings'
+    label: 'W1c Pack warnings: smokeless tobacco'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W2A_CIGARETTES
+    name: 'Tobacco Warning: W2a cigarette packaging health warnings, other characteristics'
+    label: 'W2a Pack warnings, other features: cigarettes'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W2B_TOBACCOSMOKED
+    name: 'Tobacco Warning: W2b smoked tobacco packaging health warnings, other characteristics'
+    label: 'W2b Pack warnings, other features: smoked tobacco'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W2C_TOBACCOSMOKELESS
+    name: 'Tobacco Warning: W2c smokeless tobacco packaging health warnings, other characteristics'
+    label: 'W2c Pack warnings, other features: smokeless'
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_W3_MASSMEDIA
+    name: 'Tobacco Warning: W3 anti-tobacco mass-media campaigns'
+    label: W3 Mass-media campaigns
+    category: W - Warn
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_E1_DIRECTADBANS
+    name: 'Tobacco Enforce bans: E1 direct advertising'
+    label: E1 Bans on direct advertising
+    category: E - Enforce
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_E2_INDIRECTADBANS
+    name: 'Tobacco Enforce bans: E2 indirect advertising'
+    label: E2 Bans on indirect advertising
+    category: E - Enforce
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_E3_INDIRECTADBANSPLUS
+    name: 'Tobacco Enforce bans: E3 indirect advertising, additional bans'
+    label: E3 Additional indirect advertising bans
+    category: E - Enforce
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: E_compl_all_dir
+    name: Overall compliance with bans on direct advertising (score)
+    label: 'Overall compliance: bans on direct advertising (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e_all_indir
+    name: Overall compliance with bans on promotion and sponsorship (score)
+    label: 'Overall compliance: bans on promotion and sponsorship (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e1
+    name: Compliance with ban on advertising on national television and radio (score)
+    label: 'Compliance: ban on advertising on national television and radio (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e3
+    name: Compliance with ban on advertising in local magazines and newspapers (score)
+    label: 'Compliance: ban on advertising in local magazines and newspapers (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e5
+    name: Compliance with ban on billboard and outdoor advertising (score)
+    label: 'Compliance: ban on billboard and outdoor advertising (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e6
+    name: Compliance with ban on advertising at point of sale (score)
+    label: 'Compliance: ban on advertising at point of sale (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e9
+    name: Compliance with ban on free distribution in mail or through other means (score)
+    label: 'Compliance: ban on free distribution in mail or through other means (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e10
+    name: Compliance with ban on promotional discounts (score)
+    label: 'Compliance: ban on promotional discounts (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e11
+    name: Compliance with ban on use of brand name of non-tobacco product for tobacco product (score)
+    label: 'Compliance: ban on use of brand name of non-tobacco product for tobacco product (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e12
+    name: Compliance with ban on indentifying non-tobacco products with tobacco brand names (score)
+    label: 'Compliance: ban on identifying non-tobacco products with tobacco brand names (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e13
+    name: Compliance with ban on appearance of tobacco brands in TV and/or films (score)
+    label: 'Compliance: ban on appearance of tobacco brands in TV and/or films (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e14
+    name: Compliance with ban on appearance of tobacco products in TV and/or films (score)
+    label: 'Compliance: ban on appearance of tobacco products in TV and/or films (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: E_compl_e15
+    name: Compliance with ban on sponsorship (contributions and/or publicity of contributions) (score)
+    label: 'Compliance: ban on sponsorship (contributions and/or publicity of contributions) (0-10)'
+    category: E - Enforce (compliance)
+    measurement_scale: ordinal
+    unit: Compliance score 0-10 (expert assessment)
+  - code: TOBACCO_MPOWER_R_TAX
+    name: 'Tobacco Raise taxes: National taxes for tobacco and nicotine products'
+    label: R Taxes on tobacco and nicotine products
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_TAXSTRUCTURE
+    name: 'Tobacco Raise taxes: Tobacco tax structure'
+    label: R Tax structure
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_TAXADMINISTRATION
+    name: 'Tobacco Raise taxes: Tax administration'
+    label: R Tax administration
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_EARMARKED
+    name: 'Tobacco Raise taxes:  Reported use of earmarked tobacco taxes'
+    label: R Earmarked tobacco taxes
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_TAXREVENUELATEST
+    name: 'Tobacco Raise taxes: Annual tax revenues from tobacco products, latest reporting period'
+    label: R Tax revenue, latest period
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_TAXREVENUEPREVIOUS
+    name: 'Tobacco Raise taxes: Annual tax revenues from tobacco products, previous reporting period'
+    label: R Tax revenue, previous period
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_PRICE
+    name: 'Tobacco Raise taxes: Retail price for tobacco and nicotine products'
+    label: R Retail prices
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_INFLATIONADJUSTEDPRICES
+    name: 'Tobacco Raise taxes: Inflation-adjusted prices for most sold brand of cigarettes'
+    label: R Inflation-adjusted cigarette prices
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_R_AFFORDABILITY
+    name: 'Tobacco Raise taxes: Affordability'
+    label: R Affordability
+    category: R - Raise taxes
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+  - code: TOBACCO_MPOWER_NTCP
+    name: 'Tobacco MPOWER: National tobacco control programmes (NTCP)'
+    label: National tobacco control programme
+    category: NTCP
+    measurement_scale: text
+    unit: 'Mixed by question (Yes/No, categories, percentages, counts, prices): see the TOBACCO_INDICATOR dimension'
+- id: prevalence_2022
+  source: who_gho
+  countries:
+  - AUT
+  - BEL
+  - BGR
+  - HRV
+  - CYP
+  - CZE
+  - DNK
+  - EST
+  - FIN
+  - FRA
+  - DEU
+  - GRC
+  - HUN
+  - IRL
+  - ITA
+  - LVA
+  - LTU
+  - LUX
+  - MLT
+  - NLD
+  - POL
+  - PRT
+  - ROU
+  - SVK
+  - SVN
+  - ESP
+  - SWE
+  - AUS
+  - CAN
+  - CHL
+  - COL
+  - CRI
+  - ISL
+  - ISR
+  - JPN
+  - KOR
+  - MEX
+  - NZL
+  - NOR
+  - CHE
+  - TUR
+  - GBR
+  - USA
+  start_year: 2022
+  end_year: 2022
+  frequency: any
+  filters:
+    SpatialDimType: COUNTRY
+  indicators:
+  - code: M_Est_tob_curr_std
+    name: Estimate of current tobacco use prevalence (%) (age-standardized)
+    label: Tobacco use prevalence, age-standardised (%)
+    category: Context - prevalence
+    measurement_scale: ratio
+    definition: Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised.
+    unit: '% of population aged 15+'
+- id: prevalence_2024
+  source: who_gho
+  countries:
+  - AUT
+  - BEL
+  - BGR
+  - HRV
+  - CYP
+  - CZE
+  - DNK
+  - EST
+  - FIN
+  - FRA
+  - DEU
+  - GRC
+  - HUN
+  - IRL
+  - ITA
+  - LVA
+  - LTU
+  - LUX
+  - MLT
+  - NLD
+  - POL
+  - PRT
+  - ROU
+  - SVK
+  - SVN
+  - ESP
+  - SWE
+  - AUS
+  - CAN
+  - CHL
+  - COL
+  - CRI
+  - ISL
+  - ISR
+  - JPN
+  - KOR
+  - MEX
+  - NZL
+  - NOR
+  - CHE
+  - TUR
+  - GBR
+  - USA
+  start_year: 2024
+  end_year: 2024
+  frequency: any
+  filters:
+    SpatialDimType: COUNTRY
+  indicators:
+  - code: M_Est_tob_curr_std
+    name: Estimate of current tobacco use prevalence (%) (age-standardized)
+    label: Tobacco use prevalence, age-standardised (%)
+    category: Context - prevalence
+    measurement_scale: ratio
+    definition: Modelled estimate of the percentage of the population aged 15+ currently using any tobacco product, age-standardised.
+    unit: '% of population aged 15+'
 processing:
   country_codes: iso3
-  numeric_values: source_numeric_only   # answers and levels stay as text (value_text)
+  numeric_values: source_numeric_only
   standardise_periods: true
   missing_values:
     treatment: keep
-    markers: []                         # '. . .', '—' and 'Not applicable' are kept as published
+    markers:
+    - . . .
   deduplicate: true
   wide_panel: true
-
 validation:
   check_duplicates: true
   check_missing: true
@@ -376,11 +545,13 @@ validation:
   min_records: 1
   max_missing_share: 0.9
   fail_on_request_error: true
-
 output:
   directory: output
-  folder_name: "{project}_{timestamp}"
+  folder_name: '{project}_{timestamp}'
   overwrite: false
-  formats: [csv, xlsx, json]
+  formats:
+  - csv
+  - xlsx
+  - json
   data_dictionary: true
   readme: true

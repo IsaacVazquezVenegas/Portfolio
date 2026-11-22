@@ -218,6 +218,11 @@
     }
   ],
   "expected_data_structure": "Long format: one row per indicator x country x year (x sex for prevalence). MPOWER levels are text categories in value_text; prevalence is numeric in value with low/high. Optional wide country-year panel.",
+  "missing_value_codes": [
+    {"source": "who_gho", "code": ". . .", "meaning": "no_data", "evidence": "value-codes on run WHO_MPOWER_policies_20261122_182912: 3614 row(s) in 39 indicator(s)"},
+    {"source": "who_gho", "code": "—", "meaning": "not_applicable", "note": "Follow-up question skipped after a 'No' (e.g. O_Ins_* when O_Avail_* is 'No'); also _Group levels of countries not assessed.", "evidence": "value-codes on run WHO_MPOWER_policies_20261122_182912: 1215 row(s); cross-tab O_Avail_hosp x O_Ins_hosp"},
+    {"source": "who_gho", "code": "Not applicable", "meaning": "not_applicable", "evidence": "value-codes on run WHO_MPOWER_policies_20261122_182912: 151 row(s) in 21 indicator(s)"}
+  ],
   "known_limitations": [
     "MPOWER group levels are ordinal categories delivered as text ('1'-'5', 'Not applicable'); they are not converted to numeric scores. The meaning of each level differs by measure and must be taken from the WHO report technical notes.",
     "MPOWER data exist only for report years (2007, 2008, 2010, ... 2022); intermediate years are absent by design and are not interpolated.",

@@ -195,11 +195,31 @@ Classify each indicator:
 
 `confirmed` and `partially_verified` require at least one `evidence` entry (`query`, `performed_on`, `result`).
 
+### 4.1 How each source codes missing values
+
+Sources publish "no value" in their own ways, and a marker read as a value inflates coverage (WHO's `. . .` once made a 35-country indicator look complete for 43). For every source, before the plan leaves `draft`:
+
+1. Do a test run (`run --allow-unapproved-plan`) and list the text codes it returned:
+   ```bash
+   python -m src.main value-codes --run projects/<PROJECT>/output/<RUN>
+   ```
+   The command lists each non-numeric code that looks like a marker (punctuation only, "not applicable", "no data"…), with its row count, indicators and examples, and proposes plan entries.
+2. Classify each code and record it in the plan's `missing_value_codes`:
+   - `no_data`: the source has no value (WHO `. . .`). These codes **must** be listed in `processing.missing_values.markers`; validation fails otherwise.
+   - `not_applicable`: the question does not apply, often a follow-up skipped after a "No" (WHO `—`). Keep it as a category; do not mark it missing.
+   - `category`: an ordinary answer that only looks like a marker.
+   Give `evidence` for each code (for example a cross-tab: `O_Avail_hosp = No` gives `O_Ins_hosp = —`). The heuristic only suggests; a human-checked classification is required.
+3. Missing rows keep `value_text`, so the original code stays traceable.
+
+`validate-plan` warns about a source whose codes are not recorded, and `validate` warns about a configuration marker the plan does not record.
+
 ## Stage 5 — Extraction plan
 
 Produce `extraction_plan.json` conforming to `schemas/extraction_plan.schema.json`, with:
 
 `scoping` (kept from Stage 1), `research`, `sources`, `indicator_mapping` (with evidence), `expected_data_structure`, `known_limitations`, `outstanding_decisions`, and `approval: {"status": "draft"}`.
+
+Give each indicator mapping a short `label` (at most 120 characters, for example "Smoke-free places (count, 0-8)"). It becomes the column name of the wide view and the series name on the page, so a reader does not need the code.
 
 Every indicator mapping names the register rows it answers in `register_rows` (for example `["R5", "R6", "R7"]` for a bundle covering three medicines). A variable you add yourself first gets its own register row with `origin: "assumed"`. Before moving to `draft`, no row may remain `ambiguous`. `validate-plan` then warns about:
 
@@ -240,6 +260,8 @@ Generate `extraction_config.yaml` conforming to `schemas/extraction_config.schem
 - [ ] Country codes are written **in the source's own coding** (ISO3 for WHO and World Bank, Eurostat geo codes such as `EL` for Greece). Harmonisation to ISO3 is done by the engine.
 - [ ] Filters use only keys the connector supports (WHO: `SpatialDimType`, `Dim1`…`Dim3`, `Dim1Type`…, `ParentLocationCode`, `TimeDimType`, `DataSourceDim(Type)`; World Bank: `source`; Eurostat: dataset dimension codes except `geo`/`time`).
 - [ ] `measurement_scale`, `unit`, `name` and `category` are filled for every indicator (the engine checks `name` against the source metadata).
+- [ ] Each indicator carries the plan's `label`, and indicators are listed in the order the reader should see the groups (`category`) on the page.
+- [ ] `processing.missing_values.markers` lists every code the plan classifies as `no_data`.
 - [ ] `processing.numeric_values: source_numeric_only` unless the researcher asked otherwise; no missing-value markers that would hide meaningful categories (e.g. "Not applicable").
 - [ ] No fields outside the schema (they are rejected).
 

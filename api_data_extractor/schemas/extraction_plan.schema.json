@@ -199,6 +199,20 @@
           "title": "Official Name",
           "type": "string"
         },
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Short human-readable label for the wide view and the page (copied to the configuration).",
+          "title": "Label"
+        },
         "definition": {
           "anyOf": [
             {
@@ -339,6 +353,65 @@
         "verification_status"
       ],
       "title": "IndicatorMapping",
+      "type": "object"
+    },
+    "MissingValueCode": {
+      "additionalProperties": false,
+      "description": "How a source writes 'no observation' (Stage 4): every non-numeric code is classified once.",
+      "properties": {
+        "source": {
+          "description": "A sources[].id.",
+          "title": "Source",
+          "type": "string"
+        },
+        "code": {
+          "description": "The text exactly as the API returns it, e.g. '. . .'.",
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "meaning": {
+          "description": "no_data: flagged as missing (listed in processing.missing_values.markers); not_applicable: a real answer kept as a category; category: an ordinary answer.",
+          "enum": [
+            "no_data",
+            "not_applicable",
+            "category"
+          ],
+          "title": "Meaning",
+          "type": "string"
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Note"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Where the code was seen (value-codes output, documentation URL).",
+          "title": "Evidence"
+        }
+      },
+      "required": [
+        "source",
+        "code",
+        "meaning"
+      ],
+      "title": "MissingValueCode",
       "type": "object"
     },
     "PlanSource": {
@@ -980,6 +1053,14 @@
       "default": null,
       "description": "Required from status 'draft' on.",
       "title": "Expected Data Structure"
+    },
+    "missing_value_codes": {
+      "description": "Stage 4: how each source codes missing values; 'no_data' codes become processing.missing_values.markers.",
+      "items": {
+        "$ref": "#/$defs/MissingValueCode"
+      },
+      "title": "Missing Value Codes",
+      "type": "array"
     },
     "known_limitations": {
       "items": {

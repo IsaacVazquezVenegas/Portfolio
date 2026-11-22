@@ -8,6 +8,7 @@ Run from the ``api_data_extractor`` folder::
     python -m src.main render-plan --plan projects/WHO_MPOWER/extraction_plan.json
     python -m src.main page-export --plan projects/WHO_MPOWER/extraction_plan.json --site page
     python -m src.main apply-approval --plan projects/WHO_MPOWER/extraction_plan.json --approval approval.json
+    python -m src.main value-codes --run projects/WHO_MPOWER/output/<run>
     python -m src.main connectors
     python -m src.main schemas
 
@@ -147,6 +148,31 @@ def cmd_apply_approval(args) -> int:
     return 0
 
 
+def cmd_value_codes(args) -> int:
+    import json
+
+    from .value_codes import inspect_value_codes, plan_entries
+
+    run = Path(args.run)
+    found = inspect_value_codes(run / "dataset.csv")
+    print(f"Text values without a number in run {run.name} (Stage 4 missing-value check):")
+    for f in found:
+        if f.get("code") is None:
+            print(f"  [{f['source']}] {f['distinct_codes']} other distinct text value(s), {f['rows']} row(s): "
+                  "ordinary categories (Yes/No, levels, names...)")
+        else:
+            print(f"  [{f['source']}] {f['code']!r:>20}  -> {f['suggested_meaning']:<15} "
+                  f"{f['rows']} row(s), {f['indicators']} indicator(s), e.g. {', '.join(f['examples'])}")
+            if f.get("note"):
+                print(f"  {'':>20}     note: {f['note']}")
+    entries = plan_entries(found, run.name)
+    print("\nProposed plan entries (confirm with the researcher, then add to missing_value_codes):")
+    print(json.dumps(entries, ensure_ascii=False, indent=1))
+    markers = [e["code"] for e in entries if e["meaning"] == "no_data"]
+    print(f"\nConfiguration: processing.missing_values.markers: {json.dumps(markers, ensure_ascii=False)}")
+    return 0
+
+
 def cmd_connectors(args) -> int:
     from .connectors import available_connectors, get_connector_class
 
@@ -201,6 +227,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--plan", required=True)
     p.add_argument("--approval", required=True, help="JSON file holding the page's approval record")
     p.set_defaults(func=cmd_apply_approval)
+
+    p = sub.add_parser("value-codes", help="list how a run's sources code missing values (Stage 4)")
+    p.add_argument("--run", required=True, help="output folder of a (test) run")
+    p.set_defaults(func=cmd_value_codes)
 
     p = sub.add_parser("connectors", help="list approved connectors")
     p.set_defaults(func=cmd_connectors)
