@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — Data Fetcher page
+
+* New page `page/index.html`, published as a private artifact: projects, Stage 1 register, plan with evidence, approval by the researcher, runs, data (coverage by country and year, distribution by year, row preview linked to source requests), history of changes. Light and dark themes.
+* New `page-export` command: writes the plan, its fingerprint and warnings, and a structural log of every change; summarises a run per series (coverage, categorical or numeric distribution) and publishes its files in forms the page can serve (Excel sheets and raw responses as parts the page reassembles on download).
+* New `apply-approval` command: records an approval given on the page in the plan, only if it names the plan's current fingerprint and the approved plan validates.
+* `docs/DATA_FETCHER_PAGE.md` documents the page, its files and its database.
+
 ## Unreleased — Stage 1 in the extraction plan
 
 * The plan gains a `scoping` section: starting point, inputs supplied, scope with its origin, retrieval strategy, Requirements Register, questions with defaults and answers, catalogue look-ups and analytical notes.

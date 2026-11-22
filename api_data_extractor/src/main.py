@@ -6,6 +6,8 @@ Run from the ``api_data_extractor`` folder::
     python -m src.main run      --config projects/WHO_MPOWER/extraction_config.yaml
     python -m src.main validate-plan --plan projects/WHO_MPOWER/extraction_plan.json
     python -m src.main render-plan --plan projects/WHO_MPOWER/extraction_plan.json
+    python -m src.main page-export --plan projects/WHO_MPOWER/extraction_plan.json --site page
+    python -m src.main apply-approval --plan projects/WHO_MPOWER/extraction_plan.json --approval approval.json
     python -m src.main connectors
     python -m src.main schemas
 
@@ -108,6 +110,43 @@ def cmd_run(args) -> int:
     return 0
 
 
+def cmd_page_export(args) -> int:
+    from .page_export import export_plan, export_run
+
+    if not args.plan and not args.run:
+        print("ERROR: give --plan, --run or both", file=sys.stderr)
+        return 1
+    plan_id = None
+    if args.plan:
+        res = export_plan(args.plan, args.site, note=args.note)
+        plan_id = res["plan_id"]
+        print(f"plan '{plan_id}': {res['changes']} change(s) logged, sha256 {res['plan_sha256'][:12]}")
+        for w in res["warnings"]:
+            print(f"  WARNING: {w}")
+    if args.run:
+        res = export_run(args.run, args.site, plan_id=plan_id)
+        print(f"run '{res['run_id']}': {res['rows']} observation(s), {res['series']} series")
+        for f in res["files"]:
+            print(f"  {f['name']}: {f['bytes'] / 1e6:.2f} MB")
+        print(f"  folder: {res['folder']}")
+    return 0
+
+
+def cmd_apply_approval(args) -> int:
+    import json
+
+    from .page_export import ApprovalError, apply_approval
+
+    record = json.loads(Path(args.approval).read_text(encoding="utf-8"))
+    try:
+        block = apply_approval(args.plan, record)
+    except ApprovalError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+    print(f"OK: plan approved by {block['approved_by']} on {block['approved_on']}")
+    return 0
+
+
 def cmd_connectors(args) -> int:
     from .connectors import available_connectors, get_connector_class
 
@@ -150,6 +189,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--allow-unapproved-plan", action="store_true",
                    help="execute although the linked plan is not approved (test runs only)")
     p.set_defaults(func=cmd_run)
+
+    p = sub.add_parser("page-export", help="write a plan and/or a run's outputs as Data Fetcher page files")
+    p.add_argument("--plan", help="extraction plan to export (its changes are logged)")
+    p.add_argument("--run", help="output folder of a run to export")
+    p.add_argument("--site", required=True, help="local folder mirroring the page's files")
+    p.add_argument("--note", help="one line saying why the plan changed, shown in the page's history")
+    p.set_defaults(func=cmd_page_export)
+
+    p = sub.add_parser("apply-approval", help="record an approval given on the Data Fetcher page in the plan")
+    p.add_argument("--plan", required=True)
+    p.add_argument("--approval", required=True, help="JSON file holding the page's approval record")
+    p.set_defaults(func=cmd_apply_approval)
 
     p = sub.add_parser("connectors", help="list approved connectors")
     p.set_defaults(func=cmd_connectors)

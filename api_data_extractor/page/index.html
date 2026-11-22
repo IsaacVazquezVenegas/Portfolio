@@ -1,0 +1,646 @@
+<title>Data Fetcher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; a project bar, then tabs; every list is compact rows that open in place. */
+:root {
+  --bg: #fbfbfa; --surface: #ffffff; --surface-2: #f2f2ef; --line: #e3e2dd; --line-strong: #cfcec7;
+  --fg: #16171a; --fg-2: #55565b; --fg-3: #85868b;
+  --accent: #2a78d6; --accent-soft: rgba(42,120,214,.10); --accent-ink: #1c5cab;
+  --good: #0a7d0a; --warn: #a86a00; --warn-fill: #fab219; --bad: #c22f2f;
+  --o1: #86b6ef; --o2: #5598e7; --o3: #2a78d6; --o4: #1c5cab; --o5: #104281;
+  --na: #c9c8c1; --miss: #fab219; --absent: #efeeea;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100; --c5: #e87ba4; --c6: #008300; --c7: #6250d6; --c8: #e34948;
+  --f-text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #151618; --surface: #1c1d20; --surface-2: #232428; --line: #303136; --line-strong: #44454b;
+  --fg: #ecebe7; --fg-2: #b6b5ae; --fg-3: #8a8a86;
+  --accent: #3987e5; --accent-soft: rgba(57,135,229,.16); --accent-ink: #86b6ef;
+  --good: #3fbf3f; --warn: #f0b443; --warn-fill: #c98500; --bad: #e66767;
+  --o1: #184f95; --o2: #256abf; --o3: #3987e5; --o4: #6da7ec; --o5: #b7d3f6;
+  --na: #4a4a47; --miss: #c98500; --absent: #26272b;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #0ca30c; --c7: #9085e9; --c8: #e66767;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #151618; --surface: #1c1d20; --surface-2: #232428; --line: #303136; --line-strong: #44454b;
+  --fg: #ecebe7; --fg-2: #b6b5ae; --fg-3: #8a8a86;
+  --accent: #3987e5; --accent-soft: rgba(57,135,229,.16); --accent-ink: #86b6ef;
+  --good: #3fbf3f; --warn: #f0b443; --warn-fill: #c98500; --bad: #e66767;
+  --o1: #184f95; --o2: #256abf; --o3: #3987e5; --o4: #6da7ec; --o5: #b7d3f6;
+  --na: #4a4a47; --miss: #c98500; --absent: #26272b;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --c5: #d55181; --c6: #0ca30c; --c7: #9085e9; --c8: #e66767;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 13.5px/1.45 var(--f-text); margin: 0;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 14px; }
+code, .mono { font-family: var(--f-mono); font-size: 12px; }
+a { color: var(--accent-ink); }
+h1 { font-size: 17px; margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h2 { font-size: 13px; margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-2); }
+button { font: inherit; color: inherit; }
+.btn { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 12.5px; white-space: nowrap; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, .row:focus-visible, .tab:focus-visible, .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { color: var(--fg-3); font-size: 11.5px; }
+.muted { color: var(--fg-2); }
+
+.top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.crumb { color: var(--fg-2); cursor: pointer; background: none; border: 0; padding: 0; font-size: 17px; }
+.crumb:hover { color: var(--accent-ink); }
+.top .sep { color: var(--fg-3); }
+
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.bar .grow { flex: 1 1 260px; min-width: 0; }
+.bar .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.pill { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 500; border: 1px solid var(--line-strong); color: var(--fg-2); white-space: nowrap; }
+.pill.clear, .pill.approved, .pill.confirmed, .pill.success { color: var(--good); border-color: currentColor; }
+.pill.ambiguous, .pill.draft, .pill.partially_verified, .pill.completed_with_warnings, .pill.open, .pill.test { color: var(--warn); border-color: currentColor; }
+.pill.needs_another_source, .pill.scoping { color: var(--accent-ink); border-color: currentColor; }
+.pill.failed, .pill.rejected, .pill.unverified, .pill.partial { color: var(--bad); border-color: currentColor; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { background: none; border: 0; border-bottom: 2px solid transparent; padding: 6px 12px; cursor: pointer; color: var(--fg-2); font-weight: 500; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tab .n { color: var(--fg-3); font-weight: 400; margin-left: 4px; }
+
+.panel { display: grid; gap: 12px; }
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.list-head, .row { display: grid; gap: 10px; align-items: center; padding: 6px 12px; }
+.list-head { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg-3); border-bottom: 1px solid var(--line); background: var(--surface-2); }
+.row { border-top: 1px solid var(--line); cursor: pointer; min-height: 34px; }
+.row:first-of-type { border-top: 0; }
+.list-head + .row { border-top: 0; }
+.row:hover { background: var(--surface-2); }
+.row[aria-expanded="true"] { background: var(--accent-soft); }
+.row > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .wrap-ok { white-space: normal; }
+.detail { border-top: 1px dashed var(--line); padding: 10px 12px 14px 12px; display: grid; gap: 8px; background: var(--surface); }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; }
+.kv > dt { color: var(--fg-3); font-size: 12px; }
+.kv > dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.sub { display: grid; gap: 4px; }
+.sub .item { padding: 4px 8px; border-left: 2px solid var(--line-strong); }
+.more { background: none; border: 0; padding: 0; color: var(--accent-ink); cursor: pointer; font-size: 12.5px; }
+
+.cols-register { grid-template-columns: 44px minmax(0,2.2fr) 54px minmax(0,1fr) minmax(0,1.6fr) 150px; }
+.cols-ind { grid-template-columns: minmax(0,1.2fr) minmax(0,2fr) 80px 70px 130px; }
+.cols-proj { grid-template-columns: minmax(0,1.1fr) minmax(0,2.4fr) 90px minmax(0,1.2fr) 150px; }
+.cols-run { grid-template-columns: minmax(0,1.6fr) 150px 240px 90px; }
+.cols-series { grid-template-columns: minmax(0,2.2fr) 90px 80px 110px minmax(90px,1fr); }
+.cols-hist { grid-template-columns: 140px 70px minmax(0,1fr) 90px; }
+@media (max-width: 720px) {
+  .cols-register { grid-template-columns: 40px minmax(0,1fr) 120px; }
+  .cols-register > :nth-child(3), .cols-register > :nth-child(4), .cols-register > :nth-child(5) { display: none; }
+  .cols-ind { grid-template-columns: minmax(0,1fr) 120px; }
+  .cols-ind > :nth-child(2), .cols-ind > :nth-child(3), .cols-ind > :nth-child(4) { display: none; }
+  .cols-proj { grid-template-columns: minmax(0,1fr) 90px; }
+  .cols-proj > :nth-child(2), .cols-proj > :nth-child(4), .cols-proj > :nth-child(5) { display: none; }
+  .cols-run { grid-template-columns: minmax(0,1fr) 150px; }
+  .cols-run > :nth-child(2), .cols-run > :nth-child(4) { display: none; }
+  .cols-series { grid-template-columns: minmax(0,1fr) 90px; }
+  .cols-series > :nth-child(2), .cols-series > :nth-child(3), .cols-series > :nth-child(4) { display: none; }
+  .cols-hist { grid-template-columns: 110px minmax(0,1fr); }
+  .cols-hist > :nth-child(2), .cols-hist > :nth-child(4) { display: none; }
+  .kv { grid-template-columns: 1fr; }
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; color: var(--fg-2); }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); background: var(--accent-soft); }
+input[type="search"], input[type="text"], select, textarea { font: inherit; font-size: 12.5px; color: var(--fg); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 6px; padding: 4px 8px; }
+textarea { width: 100%; min-height: 54px; resize: vertical; }
+.field { display: grid; gap: 3px; }
+.field label { font-size: 12px; color: var(--fg-2); }
+
+.meter { height: 6px; background: var(--absent); border-radius: 3px; overflow: hidden; }
+.meter > span { display: block; height: 100%; background: var(--accent); }
+.note { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); border-radius: 6px; padding: 8px 12px; }
+.note.warn { border-left-color: var(--warn-fill); }
+.empty { padding: 28px 16px; text-align: center; color: var(--fg-2); background: var(--surface); border: 1px dashed var(--line-strong); border-radius: 8px; }
+.copybox { display: grid; gap: 6px; }
+.copybox textarea { font-family: var(--f-mono); font-size: 12px; }
+
+.chart { width: 100%; overflow-x: auto; }
+.chart svg text { fill: var(--fg-2); font: 11px var(--f-text); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--fg-2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.covwrap { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; }
+canvas.cov { width: 100%; image-rendering: pixelated; border-radius: 4px; cursor: crosshair; }
+.tip { position: fixed; z-index: 20; pointer-events: none; background: var(--fg); color: var(--bg); font-size: 11.5px; padding: 4px 8px; border-radius: 4px; max-width: 280px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; }
+.grid2 > * { min-width: 0; }
+.scrollx { overflow-x: auto; }
+table.prev { border-collapse: collapse; font-size: 12px; width: 100%; }
+table.prev th, table.prev td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.prev th { color: var(--fg-3); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 6px 14px; border-radius: 6px; font-size: 12.5px; z-index: 30; }
+@media (prefers-reduced-motion: no-preference) { .row, .chip, .btn { transition: background .12s, border-color .12s; } }
+</style>
+
+<div class="wrap" id="app">
+  <div class="top" id="top"><h1>Data Fetcher</h1></div>
+  <div id="view"><div class="empty">Loading projects…</div></div>
+</div>
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+"use strict";
+/* ---------- utilities ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtN = n => (n ?? 0).toLocaleString("en-GB");
+const fmtT = t => { if (!t) return "—"; const d = new Date(t); return isNaN(d) ? esc(t) : d.toLocaleString("en-GB", {day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"}); };
+const fmtD = t => { if (!t) return "—"; const d = new Date(t); return isNaN(d) ? esc(t) : d.toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric"}); };
+const label = s => String(s ?? "").replace(/_/g, " ");
+const pill = (s, text) => `<span class="pill ${esc(s)}">${esc(text ?? label(s))}</span>`;
+const store = { get(k, d) { try { const v = localStorage.getItem("df:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+                set(k, v) { try { localStorage.setItem("df:" + k, JSON.stringify(v)); } catch (e) {} } };
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 2600); }
+async function getJSON(path) { const r = await fetch(path, {cache: "no-store"}); if (!r.ok) throw new Error(path + ": HTTP " + r.status); return r.json(); }
+const tip = $("#tip");
+function showTip(e, html) { tip.innerHTML = html; tip.hidden = false; const x = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8); tip.style.left = x + "px"; tip.style.top = (e.clientY + 14) + "px"; }
+function hideTip() { tip.hidden = true; }
+
+/* ---------- platform capabilities (all optional) ---------- */
+const cap = { db: null, user: null, downloads: null, me: null, canWrite: false };
+const capReady = (async () => {
+  if (!window.claude || !window.claude.use) return;
+  const [db, user, downloads] = await Promise.all(["db", "user", "downloads"].map(n => window.claude.use(n).catch(() => null)));
+  cap.db = db; cap.user = user; cap.downloads = downloads;
+  if (user) { try { cap.me = await user.me(); cap.canWrite = (await user.can("data.write")) !== false; } catch (e) {} }
+})();
+
+/* ---------- state ---------- */
+const S = { projects: [], project: null, plan: null, meta: null, history: [], tab: store.get("tab", "register"),
+            regFilter: "all", regSearch: "", open: new Set(), run: null, summary: null, approval: null, events: [], unsub: [] };
+
+/* ---------- copy box (clipboard may be refused) ---------- */
+function copyText(text, host) {
+  const done = () => toast("Copied. Paste it in your Claude chat.");
+  const fallback = () => { host.innerHTML = `<div class="copybox"><span class="hint">Copy this message (Ctrl+C) and paste it in your Claude chat.</span><textarea readonly>${esc(text)}</textarea></div>`; const ta = $("textarea", host); ta.focus(); ta.select(); };
+  try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+}
+
+/* ---------- downloads ---------- */
+function loadScript(src) { return new Promise((ok, ko) => { if (document.querySelector(`script[src="${src}"]`) && window.XLSX) return ok(); const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("could not load " + src)); document.head.appendChild(s); }); }
+async function fetchOk(path) { const r = await fetch(path); if (!r.ok) throw new Error(path.split("/").pop() + ": HTTP " + r.status); return r; }
+/* Files the page cannot serve as they are: Excel workbooks are rebuilt from their exported sheets,
+   raw responses are joined from their parts. Everything else is sent as published. */
+async function buildFile(base, f) {
+  if (f.build === "xlsx") {
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");
+    const spec = await (await fetchOk(`${base}/${f.path}`)).json();
+    const wb = XLSX.utils.book_new();
+    for (const sh of spec.sheets) {
+      let rows = sh.rows;
+      if (sh.csv) {
+        const text = await (await fetchOk(`${base}/${sh.csv}`)).text();
+        rows = Papa.parse(text, {skipEmptyLines: true}).data;
+        rows = rows.map((r, i) => i === 0 ? r : r.map((v, c) => sh.types[c] === "n" && v !== "" ? Number(v) : v));
+      }
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), sh.name.slice(0, 31));
+    }
+    return new Blob([XLSX.write(wb, {type: "array", bookType: "xlsx", compression: true})], {type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  }
+  if (f.build === "join") {
+    let all = [];
+    for (const part of f.parts) all = all.concat(await (await fetchOk(`${base}/${part}`)).json());
+    return new Blob([JSON.stringify(all, null, 2)], {type: "application/json"});
+  }
+  return (await fetchOk(`${base}/${f.path || f.name}`)).blob();
+}
+async function download(base, f, filename, btn) {
+  await capReady;
+  if (!cap.downloads) { toast("Downloads are not available in this view. Open the page on claude.ai."); return; }
+  const was = btn ? btn.textContent : ""; if (btn) { btn.disabled = true; btn.textContent = f.build ? "Preparing…" : "Fetching…"; }
+  try { await cap.downloads.save({filename, data: await buildFile(base, f)}); }
+  catch (e) { if (!(e && e.code === "declined")) toast("Download failed: " + (e.message || e.code || e)); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = was; } }
+}
+
+/* ---------- boot ---------- */
+async function boot() {
+  try { S.projects = await getJSON("data/projects.json"); } catch (e) { S.projects = []; }
+  const last = store.get("project", null);
+  const fromHash = decodeURIComponent((location.hash || "").slice(1));
+  const target = S.projects.find(p => p.id.replace(/[^A-Za-z0-9-]/g, "-") === fromHash) || null;
+  if (target) openProject(target.id); else if (last && S.projects.some(p => p.id === last) && !location.hash) renderProjects(); else renderProjects();
+}
+
+function renderTop() {
+  const top = $("#top");
+  if (!S.project) { top.innerHTML = `<h1>Data Fetcher</h1><span class="hint">Extraction projects run by the API engine. Start or continue one in Claude with <code>/datafetcher</code>.</span>`; return; }
+  top.innerHTML = `<button class="crumb" id="home" title="Back to the list of projects">Data Fetcher</button><span class="sep">/</span><h1 class="mono" style="font-size:15px">${esc(S.project)}</h1>`;
+  $("#home").onclick = () => { S.project = null; history.replaceState(null, "", location.pathname + location.search); renderProjects(); };
+}
+
+/* ---------- projects ---------- */
+function renderProjects() {
+  S.unsub.forEach(u => { try { u(); } catch (e) {} }); S.unsub = [];
+  S.project = null; renderTop();
+  const v = $("#view");
+  if (!S.projects.length) { v.innerHTML = `<div class="empty">No projects yet.<br><span class="hint">In a Claude chat, type <code>/datafetcher</code> with your research question, a list of indicators or a file. The register, plan and data will appear here.</span></div>`; return; }
+  v.innerHTML = `<div class="list"><div class="list-head cols-proj"><span>Project</span><span>Objective</span><span>Plan</span><span>Register</span><span>Last run</span></div>
+    ${S.projects.map(p => { const run = (p.runs || [])[0]; const rc = p.register_counts || {}; const total = Object.values(rc).reduce((a, b) => a + b, 0);
+      return `<div class="row cols-proj" tabindex="0" role="button" data-id="${esc(p.id)}" title="Open ${esc(p.id)}">
+        <span class="mono">${esc(p.id)}</span><span class="muted">${esc(p.objective || "—")}</span><span>${pill(p.status)}</span>
+        <span class="muted">${total ? `${total} rows · ${rc.clear || 0} clear${p.open_questions ? ` · ${p.open_questions} open question${p.open_questions > 1 ? "s" : ""}` : ""}` : "—"}</span>
+        <span class="muted">${run ? `${fmtD(run.finished_at)} · ${fmtN(run.rows)} rows` : "none yet"}</span></div>`; }).join("")}</div>`;
+  v.querySelectorAll(".row").forEach(r => { const go = () => openProject(r.dataset.id); r.onclick = go; r.onkeydown = e => { if (e.key === "Enter") go(); }; });
+}
+
+async function openProject(id) {
+  S.project = id; store.set("project", id); S.open = new Set(); S.run = null; S.summary = null; S.approval = null; S.events = [];
+  try { history.replaceState(null, "", "#" + id.replace(/[^A-Za-z0-9-]/g, "-")); } catch (e) {}
+  renderTop(); $("#view").innerHTML = `<div class="empty">Loading ${esc(id)}…</div>`;
+  try {
+    [S.plan, S.meta, S.history] = await Promise.all([getJSON(`data/${id}/plan.json`), getJSON(`data/${id}/meta.json`), getJSON(`data/${id}/history.json`).catch(() => [])]);
+  } catch (e) { $("#view").innerHTML = `<div class="empty">This project's files could not be read (${esc(e.message)}). Ask Claude to export the plan again.</div>`; return; }
+  const p = S.projects.find(x => x.id === id) || {};
+  S.runs = p.runs || [];
+  if (!["register", "plan", "runs", "data", "history"].includes(S.tab)) S.tab = "register";
+  if (!S.plan.scoping && S.tab === "register") S.tab = "plan";
+  renderProject();
+  watchApproval(id);
+}
+
+/* ---------- approval (shared database) ---------- */
+async function watchApproval(id) {
+  await capReady; if (!cap.db || S.project !== id) return;
+  try {
+    S.unsub.push(cap.db.doc("approvals/" + id).onSnapshot(snap => { S.approval = snap.exists ? snap.data() : null; if (S.project === id) renderBar(); }, () => {}));
+    S.unsub.push(cap.db.collection("events").where("plan_id", "==", id).onSnapshot(snap => {
+      S.events = snap.docs.map(d => ({id: d.id, ...d.data()})); if (S.project === id && S.tab === "history") renderTab(); }, () => {}));
+  } catch (e) {}
+}
+
+function approvalState() {
+  const a = S.approval, sha = S.meta.plan_sha256, st = S.plan.approval?.status;
+  if (st === "approved") return {kind: "recorded", text: `Approved by ${S.plan.approval.approved_by} on ${fmtD(S.plan.approval.approved_on)}. Recorded in the plan.`};
+  if (a && a.status === "approved" && a.plan_sha256 === sha) return {kind: "pending", text: `Approved here by ${a.by_name} on ${fmtD(a.at)}. Claude records it in the plan before the run.`};
+  if (a && a.status === "approved") return {kind: "stale", text: `An earlier version was approved by ${a.by_name}. The plan has changed since then and needs a new approval.`};
+  return {kind: "none"};
+}
+
+function renderBar() {
+  const bar = $("#bar"); if (!bar) return;
+  const plan = S.plan, st = plan.approval?.status || "draft", sha = S.meta.plan_sha256 || "";
+  const ap = approvalState();
+  const blockers = [];
+  if (st === "scoping") blockers.push("The plan is still at Stage 1 (scoping). Claude completes Stages 2 to 5 before it can be approved.");
+  (plan.outstanding_decisions || []).length && blockers.push(`${plan.outstanding_decisions.length} outstanding decision(s) must be settled in the chat first.`);
+  const canApprove = cap.db && cap.canWrite && st === "draft" && !blockers.length && ap.kind !== "pending";
+  const lastRun = S.runs[0];
+  bar.innerHTML = `
+    <div class="grow"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${pill(st, "plan: " + label(st))}
+      <span class="mono hint" title="Fingerprint of the plan's content. An approval applies to this exact version.">sha ${esc(sha.slice(0, 12))}</span>
+      ${lastRun ? `<span class="hint">last run ${fmtD(lastRun.finished_at)} · ${fmtN(lastRun.rows)} rows${lastRun.test_run ? " · test run" : ""}</span>` : `<span class="hint">no run yet</span>`}</div>
+      <div class="muted" style="margin-top:4px">${esc(plan.research?.objective || plan.scoping?.purpose || "")}</div>
+      ${ap.kind !== "none" ? `<div class="hint" style="margin-top:4px;color:${ap.kind === "stale" ? "var(--warn)" : "var(--good)"}">${esc(ap.text)}</div>` : ""}
+      ${blockers.length && st !== "approved" ? `<div class="hint" style="margin-top:4px">${blockers.map(esc).join(" ")}</div>` : ""}</div>
+    <div class="actions">
+      ${st === "draft" ? `<button class="btn primary" id="approve" ${canApprove ? "" : "disabled"} title="Records your name, the date and the plan's fingerprint. The engine refuses to run a plan you have not approved.">Approve plan…</button>` : ""}
+      ${ap.kind === "pending" ? `<button class="btn" id="withdraw" title="Cancels your approval before Claude records it in the plan.">Withdraw approval</button>` : ""}
+      <button class="btn" id="askrun" title="Copies a message asking Claude to run the extraction with the approved plan.">Copy run request</button>
+      <button class="btn" id="askcont" title="Copies a message that reopens this project in the chat.">Continue in chat</button>
+    </div>
+    <div id="barx" style="flex-basis:100%" hidden></div>`;
+  const x = $("#barx");
+  if ($("#approve")) $("#approve").onclick = () => {
+    x.hidden = false;
+    const warn = S.meta.warnings || [];
+    x.innerHTML = `<div class="note"><div style="display:grid;gap:8px">
+      <div><b>Approve version ${esc(sha.slice(0, 12))} of ${esc(S.project)}</b><div class="hint">Only you decide the scientific meaning of the indicators. Check the Plan tab first: sources, indicators, units, coverage and limitations.</div></div>
+      ${warn.length ? `<div class="hint" style="color:var(--warn)">${warn.length} warning(s) on the plan: ${warn.slice(0, 3).map(esc).join(" · ")}${warn.length > 3 ? " …" : ""}</div>` : ""}
+      <div class="field"><label for="apnote">Note (optional)</label><textarea id="apnote" placeholder="For example: approved for the descriptive overview; prevalence by sex kept."></textarea><span class="hint">Saved with the approval and shown in the History tab.</span></div>
+      <div style="display:flex;gap:8px"><button class="btn primary" id="apgo">Approve this version</button><button class="btn" id="apcancel">Cancel</button></div></div></div>`;
+    $("#apcancel").onclick = () => { x.hidden = true; };
+    $("#apgo").onclick = async () => {
+      $("#apgo").disabled = true;
+      const rec = {status: "approved", plan_id: S.project, plan_sha256: sha, by_id: cap.me?.id || null, by_name: cap.me?.name || "Researcher", at: new Date().toISOString(), note: $("#apnote").value.trim()};
+      try {
+        await cap.db.doc("approvals/" + S.project).set(rec);
+        await cap.db.collection("events").add({plan_id: S.project, kind: "approved", plan_sha256: sha, by_id: rec.by_id, by_name: rec.by_name, at: rec.at, note: rec.note});
+        toast("Plan approved. Ask Claude to run it."); x.hidden = true;
+      } catch (e) { toast("Not saved: " + (e.message || e.code)); $("#apgo").disabled = false; }
+    };
+  };
+  if ($("#withdraw")) $("#withdraw").onclick = async () => {
+    try {
+      await cap.db.doc("approvals/" + S.project).set({...S.approval, status: "withdrawn", withdrawn_at: new Date().toISOString()});
+      await cap.db.collection("events").add({plan_id: S.project, kind: "withdrawn", plan_sha256: sha, by_id: cap.me?.id || null, by_name: cap.me?.name || "Researcher", at: new Date().toISOString(), note: ""});
+      toast("Approval withdrawn.");
+    } catch (e) { toast("Not saved: " + (e.message || e.code)); }
+  };
+  $("#askrun").onclick = () => { x.hidden = false; copyText(`/datafetcher run ${S.project}`, x); };
+  $("#askcont").onclick = () => { x.hidden = false; copyText(`/datafetcher ${S.project}: `, x); };
+}
+
+/* ---------- project frame ---------- */
+function renderProject() {
+  const plan = S.plan; const reg = plan.scoping?.requirements_register || [];
+  const nHist = (S.history || []).length;
+  const tabs = [["register", "Register", reg.length], ["plan", "Plan", (plan.indicator_mapping || []).length], ["runs", "Runs", S.runs.length], ["data", "Data", null], ["history", "History", nHist]];
+  $("#view").innerHTML = `<div class="panel"><div class="bar" id="bar"></div>
+    <div class="tabs" role="tablist">${tabs.map(([k, l, n]) => `<button class="tab" role="tab" data-k="${k}" aria-selected="${S.tab === k}">${l}${n != null ? `<span class="n">${n}</span>` : ""}</button>`).join("")}</div>
+    <div id="tabview" class="panel"></div></div>`;
+  $("#view").querySelectorAll(".tab").forEach(t => t.onclick = () => { S.tab = t.dataset.k; store.set("tab", S.tab); $("#view").querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b === t)); renderTab(); });
+  renderBar(); renderTab();
+  capReady.then(() => { if (S.project) renderBar(); });
+}
+function renderTab() { const f = {register: tabRegister, plan: tabPlan, runs: tabRuns, data: tabData, history: tabHistory}[S.tab]; f($("#tabview")); }
+
+function toggleRows(host, buildDetail) {
+  host.querySelectorAll(".row[data-key]").forEach(r => {
+    const key = r.dataset.key;
+    const act = () => { if (S.open.has(key)) S.open.delete(key); else S.open.add(key); paint(); };
+    const paint = () => {
+      const open = S.open.has(key); r.setAttribute("aria-expanded", open);
+      let d = r.nextElementSibling; if (d && d.classList.contains("detail")) d.remove();
+      if (open) { d = document.createElement("div"); d.className = "detail"; r.after(d); buildDetail(key, d); }
+    };
+    r.onclick = e => { if (e.target.closest("button,a,input,select")) return; act(); };
+    r.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } };
+    paint();
+  });
+}
+
+/* ---------- register ---------- */
+const ROW_ORDER = ["ambiguous", "needs_another_source", "clear", "parked", "dropped"];
+function tabRegister(host) {
+  const sc = S.plan.scoping;
+  if (!sc) { host.innerHTML = `<div class="empty">This plan has no Stage 1 register.<br><span class="hint">Plans written before the scoping stage start at the Plan tab.</span></div>`; return; }
+  const rows = sc.requirements_register, qs = sc.questions || [];
+  const counts = {}; rows.forEach(r => counts[r.status] = (counts[r.status] || 0) + 1);
+  const open = qs.filter(q => q.status === "open");
+  const scope = sc.scope || {};
+  const q = S.regSearch.toLowerCase();
+  const shown = rows.filter(r => (S.regFilter === "all" || r.status === S.regFilter) &&
+    (!q || [r.id, r.user_wording, r.group, r.interpreted_concept, ...(r.candidates || []).map(c => c.code)].join(" ").toLowerCase().includes(q)));
+  host.innerHTML = `
+    <div class="bar" style="gap:6px 18px"><span class="hint">Scope</span>
+      ${["countries", "period", "breakdown", "outputs"].map(k => scope[k] ? `<span title="${esc(label(scope[k].origin))}">${esc(k)}: <b style="font-weight:500">${esc(scope[k].value)}</b> <span class="hint">(${esc(scope[k].origin)})</span></span>` : "").join("")}
+      <span class="hint">· starting point ${esc(sc.starting_point)}</span>
+      ${sc.retrieval_strategy ? `<button class="more" id="strat" title="Which composites, bundles and single indicators, and why">Retrieval strategy</button>` : ""}
+      <div id="stratx" style="flex-basis:100%" hidden class="muted">${esc(sc.retrieval_strategy || "")}</div></div>
+    ${open.length ? `<div class="note warn"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><b>${open.length} open question${open.length > 1 ? "s" : ""}</b><span class="hint">Answer in the chat. Unanswered questions take their default.</span></div>
+      <div class="sub" style="margin-top:6px">${open.map(q => `<div class="item"><span class="mono">${esc(q.id)}</span> ${esc(q.text)}<div class="hint">Default: ${esc(q.default)} · rows ${esc((q.rows || []).join(", ") || "—")}</div></div>`).join("")}</div>
+      <div style="margin-top:8px"><button class="btn" id="askq" title="Copies a message to answer these questions in the chat">Answer in chat</button></div><div id="askqx"></div></div>` : ""}
+    <div class="chips"><button class="chip" data-f="all" aria-pressed="${S.regFilter === "all"}">All ${rows.length}</button>
+      ${ROW_ORDER.filter(s => counts[s]).map(s => `<button class="chip" data-f="${s}" aria-pressed="${S.regFilter === s}">${esc(label(s))} ${counts[s]}</button>`).join("")}
+      <input type="search" id="rsearch" placeholder="Search wording, concept or code" value="${esc(S.regSearch)}" style="margin-left:auto;min-width:200px" aria-label="Search the register"></div>
+    <div class="list"><div class="list-head cols-register"><span>ID</span><span>Your wording</span><span>Group</span><span>Kind</span><span>Candidate</span><span>Status</span></div>
+      ${shown.map(r => `<div class="row cols-register" tabindex="0" data-key="reg:${esc(r.id)}">
+        <span class="mono">${esc(r.id)}</span><span title="${esc(r.user_wording || r.interpreted_concept)}">${r.user_wording ? esc(r.user_wording) : `<i class="muted">${esc(r.interpreted_concept)} (assumed)</i>`}</span>
+        <span class="muted">${esc(r.group || "—")}</span><span class="muted">${esc((r.kind_of_data || []).map(label).join(", "))}</span>
+        <span class="mono muted">${esc((r.candidates || []).map(c => c.code).join(", ") || "—")}</span>
+        <span>${pill(r.status)}${(r.questions || []).length ? ` <span class="hint">${esc(r.questions.join(" "))}</span>` : ""}</span></div>`).join("") || `<div class="empty" style="border:0">No row matches.</div>`}</div>
+    ${(sc.analytical_notes || []).length ? `<div><button class="more" id="notes">Analytical notes (${sc.analytical_notes.length})</button><div id="notesx" class="sub" hidden style="margin-top:6px">${sc.analytical_notes.map(n => `<div class="item"><span class="mono">${esc(n.id)}</span> ${esc(n.note)} <span class="hint">rows ${esc((n.rows || []).join(", "))}</span></div>`).join("")}</div></div>` : ""}`;
+  host.querySelectorAll(".chip[data-f]").forEach(c => c.onclick = () => { S.regFilter = c.dataset.f; tabRegister(host); });
+  const s = $("#rsearch", host); s.oninput = () => { S.regSearch = s.value; clearTimeout(s.h); s.h = setTimeout(() => { tabRegister(host); const n = $("#rsearch", host); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  if ($("#strat", host)) $("#strat", host).onclick = () => { const x = $("#stratx", host); x.hidden = !x.hidden; };
+  if ($("#notes", host)) $("#notes", host).onclick = () => { const x = $("#notesx", host); x.hidden = !x.hidden; };
+  if ($("#askq", host)) $("#askq", host).onclick = () => copyText(`/datafetcher ${S.project}: answers to ${open.map(q => q.id).join(", ")}:\n` + open.map(q => `${q.id}: `).join("\n"), $("#askqx", host));
+  toggleRows(host, (key, d) => {
+    const r = rows.find(x => "reg:" + x.id === key); if (!r) return;
+    const rq = qs.filter(q => (r.questions || []).includes(q.id) || (q.rows || []).includes(r.id));
+    const looks = (sc.catalogue_lookups || []).filter(l => (l.rows || []).includes(r.id));
+    const inds = (S.plan.indicator_mapping || []).filter(m => (m.register_rows || []).includes(r.id));
+    d.innerHTML = `<dl class="kv">
+      <dt>Your wording</dt><dd>${esc(r.user_wording || "— (assumed by Claude)")}</dd>
+      <dt>Interpreted concept</dt><dd>${esc(r.interpreted_concept)}</dd>
+      <dt>Origin</dt><dd>${esc(r.origin || "stated")}</dd>
+      ${r.reason ? `<dt>Reason</dt><dd>${esc(r.reason)}</dd>` : ""}
+      <dt>Candidates</dt><dd class="sub">${(r.candidates || []).map(c => `<div class="item"><span class="mono">${esc(c.code)}</span> <span class="hint">${esc(c.level)}${c.source ? " · " + esc(c.source) : ""}</span>${c.note ? ` <span class="muted">${esc(c.note)}</span>` : ""}</div>`).join("") || "—"}<span class="hint">Unverified until Stage 4.</span></dd>
+      ${rq.length ? `<dt>Questions</dt><dd class="sub">${rq.map(q => `<div class="item"><span class="mono">${esc(q.id)}</span> ${pill(q.status)} ${esc(q.text)}<div class="hint">${q.answer ? "Answer: " + esc(q.answer) : "Default: " + esc(q.default)}</div></div>`).join("")}</dd>` : ""}
+      ${looks.length ? `<dt>Catalogue look-ups</dt><dd class="sub">${looks.map(l => `<div class="item"><a href="${esc(l.query)}" target="_blank" rel="noopener" class="mono">${esc(l.query)}</a><div class="hint">${fmtD(l.performed_on)} · ${esc(l.result)}</div></div>`).join("")}</dd>` : ""}
+      <dt>Indicators in the plan</dt><dd>${inds.length ? inds.map(m => `<span class="mono">${esc(m.indicator_code)}</span> ${pill(m.verification_status)}`).join(" ") : `<span class="hint">None linked yet.</span>`}</dd></dl>
+      <div><button class="btn" data-ask title="Copies a message that opens this row in the chat">Discuss this row</button></div><div data-askx></div>`;
+    $("[data-ask]", d).onclick = () => copyText(`/datafetcher ${S.project} ${r.id}: `, $("[data-askx]", d));
+  });
+}
+
+/* ---------- plan ---------- */
+function tabPlan(host) {
+  const p = S.plan, inds = p.indicator_mapping || [], srcs = p.sources || [], res = p.research;
+  const warn = S.meta.warnings || [];
+  if (!res && !inds.length) { host.innerHTML = `<div class="empty">The plan is at Stage 1.<br><span class="hint">Sources, indicators and evidence appear here once Claude completes Stages 2 to 5 in the chat.</span></div>`; return; }
+  const vs = {}; inds.forEach(m => vs[m.verification_status] = (vs[m.verification_status] || 0) + 1);
+  host.innerHTML = `
+    ${warn.length ? `<div class="note warn"><b>${warn.length} warning${warn.length > 1 ? "s" : ""} from the plan check</b><div class="sub" style="margin-top:4px">${warn.map(w => `<div class="item muted">${esc(w)}</div>`).join("")}</div></div>` : ""}
+    ${res ? `<div class="bar" style="display:block"><dl class="kv">
+      <dt>Countries</dt><dd>${esc(res.geographic_coverage || "—")}</dd><dt>Period</dt><dd>${esc(res.time_period || "—")}</dd>
+      <dt>Frequency</dt><dd>${esc(res.frequency || "—")}</dd><dt>Outputs</dt><dd>${esc((res.output_formats || []).join(", "))}</dd>
+      <dt>Stated by you</dt><dd>${esc((res.stated_by_user || []).join(" · ") || "—")}</dd>
+      <dt>Assumed by Claude</dt><dd>${esc((res.assumptions || []).join(" · ") || "—")}</dd></dl></div>` : ""}
+    <h2>Sources</h2>
+    <div class="list">${srcs.map(s => `<div class="row" style="grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 120px" tabindex="0" data-key="src:${esc(s.id)}"><span><b style="font-weight:500">${esc(s.provider)}</b></span><span class="muted">${esc(s.api_name)}</span><span class="mono muted">${esc(s.id)}</span></div>`).join("")}</div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2>Indicators</h2><span class="hint">${Object.entries(vs).map(([k, n]) => `${n} ${label(k)}`).join(" · ")}</span></div>
+    <div class="list"><div class="list-head cols-ind"><span>Code</span><span>Official name</span><span>Scale</span><span>Rows</span><span>Verification</span></div>
+      ${inds.map(m => `<div class="row cols-ind" tabindex="0" data-key="ind:${esc(m.source)}:${esc(m.indicator_code)}"><span class="mono">${esc(m.indicator_code)}</span><span title="${esc(m.official_name)}">${esc(m.official_name)}</span><span class="muted">${esc(m.measurement_scale)}</span><span class="mono muted">${esc((m.register_rows || []).join(" ") || "—")}</span><span>${pill(m.verification_status)}</span></div>`).join("")}</div>
+    <div class="grid2">
+      <div><button class="more" data-t="lim">Known limitations (${(p.known_limitations || []).length})</button><div class="sub" data-x="lim" hidden style="margin-top:6px">${(p.known_limitations || []).map(t => `<div class="item muted">${esc(t)}</div>`).join("")}</div></div>
+      <div><button class="more" data-t="dec">Outstanding decisions (${(p.outstanding_decisions || []).length})</button><div class="sub" data-x="dec" hidden style="margin-top:6px">${(p.outstanding_decisions || []).map(t => `<div class="item muted">${esc(t)}</div>`).join("") || `<span class="hint">None.</span>`}</div></div>
+    </div>
+    ${p.expected_data_structure ? `<div class="hint">Expected structure: ${esc(typeof p.expected_data_structure === "string" ? p.expected_data_structure : JSON.stringify(p.expected_data_structure))}</div>` : ""}`;
+  host.querySelectorAll("[data-t]").forEach(b => b.onclick = () => { const x = $(`[data-x="${b.dataset.t}"]`, host); x.hidden = !x.hidden; });
+  toggleRows(host, (key, d) => {
+    if (key.startsWith("src:")) {
+      const s = srcs.find(x => "src:" + x.id === key);
+      d.innerHTML = `<dl class="kv">${[["Architecture", s.api_type], ["Base endpoint", s.base_url], ["Authentication", s.authentication], ["Rate limits", s.rate_limits], ["Metadata", s.metadata_available], ["Updates", s.update_frequency], ["Priority", label(s.priority)]].filter(x => x[1]).map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}
+        <dt>Documentation</dt><dd>${s.documentation_url ? `<a href="${esc(s.documentation_url)}" target="_blank" rel="noopener">${esc(s.documentation_url)}</a>` : "—"}</dd></dl>`;
+      return;
+    }
+    const m = inds.find(x => `ind:${x.source}:${x.indicator_code}` === key);
+    d.innerHTML = `<dl class="kv">
+      <dt>Research variable</dt><dd>${esc(m.research_variable || "—")}</dd>
+      ${m.definition ? `<dt>Definition</dt><dd>${esc(m.definition)}</dd>` : ""}
+      <dt>Unit</dt><dd>${esc(m.unit || "—")}</dd><dt>Coverage</dt><dd>${esc(m.geographic_coverage || "—")} · ${esc(m.time_coverage || "—")}</dd>
+      <dt>Source</dt><dd class="mono">${esc(m.source)}</dd>
+      ${m.documentation_url ? `<dt>Documentation</dt><dd><a href="${esc(m.documentation_url)}" target="_blank" rel="noopener">${esc(m.documentation_url)}</a></dd>` : ""}
+      <dt>Evidence</dt><dd class="sub">${(m.evidence || []).map(e => `<div class="item"><a class="mono" href="${esc(e.query)}" target="_blank" rel="noopener">${esc(e.query)}</a><div class="hint">${fmtD(e.performed_on)} · ${esc(e.result)}</div></div>`).join("") || `<span class="hint">No query recorded: unverified.</span>`}</dd>
+      ${(m.alternatives_considered || []).length ? `<dt>Alternatives</dt><dd class="sub">${m.alternatives_considered.map(a => `<div class="item muted">${esc(typeof a === "string" ? a : (a.indicator_code || a.code || "") + " " + (a.reason || a.note || ""))}</div>`).join("")}</dd>` : ""}
+      ${m.notes ? `<dt>Notes</dt><dd>${esc(m.notes)}</dd>` : ""}</dl>`;
+  });
+}
+
+/* ---------- runs ---------- */
+async function loadSummary(runId) {
+  if (S.summary && S.summary.run_id === runId) return S.summary;
+  S.summary = await getJSON(`data/${S.project}/runs/${runId}/summary.json`); S.run = runId; return S.summary;
+}
+function tabRuns(host) {
+  if (!S.runs.length) { host.innerHTML = `<div class="empty">No run yet.<br><span class="hint">Approve the plan, then press “Copy run request” and paste it in the chat. Each run's status, warnings and files appear here.</span></div>`; return; }
+  host.innerHTML = `<div class="list"><div class="list-head cols-run"><span>Run</span><span>Finished</span><span>Status</span><span>Rows</span></div>
+    ${S.runs.map(r => `<div class="row cols-run" tabindex="0" data-key="run:${esc(r.run_id)}"><span class="mono">${esc(r.run_id)}</span><span class="muted">${fmtT(r.finished_at)}</span><span>${pill(r.status)}${r.test_run ? " " + pill("test", "test run") : ""}</span><span class="mono">${fmtN(r.rows)}</span></div>`).join("")}</div>
+    <span class="hint">A test run uses a plan that was not approved. Its data are for checking only.</span>`;
+  toggleRows(host, async (key, d) => {
+    const id = key.slice(4); d.innerHTML = `<span class="hint">Loading…</span>`;
+    let s; try { s = await loadSummary(id); } catch (e) { d.innerHTML = `<span class="hint">Summary not found (${esc(e.message)}).</span>`; return; }
+    const groups = {}; (s.warnings || []).forEach(w => (groups[w.check || "other"] = groups[w.check || "other"] || []).push(w));
+    d.innerHTML = `<dl class="kv"><dt>Started</dt><dd>${fmtT(s.started_at)}</dd><dt>Requests</dt><dd>${fmtN(s.requests)}</dd>
+      <dt>Plan at run time</dt><dd>${esc(label(s.plan_approval?.status || "—"))}${s.plan_approval?.approved_by ? " · " + esc(s.plan_approval.approved_by) : ""}</dd>
+      <dt>Configuration</dt><dd class="mono">sha256 ${esc((s.config_sha256 || "").slice(0, 16))}</dd>
+      <dt>Errors</dt><dd>${(s.errors || []).length ? s.errors.map(e => `<div class="muted">${esc(e.message || JSON.stringify(e))}</div>`).join("") : "None"}</dd>
+      <dt>Warnings</dt><dd class="sub">${Object.entries(groups).map(([k, ws]) => `<div class="item"><b style="font-weight:500">${esc(label(k))}</b> <span class="hint">${ws.length}</span>${ws.slice(0, 4).map(w => `<div class="muted">${esc(w.message)}</div>`).join("")}</div>`).join("") || "None"}</dd>
+      <dt>Files</dt><dd class="sub">${s.files.map(f => `<div class="item" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="mono">${esc(f.name)}</span><span class="hint">${(f.bytes / 1e6).toFixed(2)} MB</span><button class="btn" data-dl="${esc(f.name)}" title="${f.build === "xlsx" ? "Rebuilds the workbook from its sheets, then saves it" : f.build === "join" ? "Joins the raw responses from their parts, then saves them" : "Saves this file to your computer"}">Download</button></div>`).join("")}</dd></dl>
+      <div><button class="btn" data-ask title="Copies a message asking Claude to go through this run's warnings with you">Discuss these warnings</button></div><div data-askx></div>`;
+    d.querySelectorAll("[data-dl]").forEach(b => b.onclick = () => download(`data/${S.project}/runs/${id}`, s.files.find(f => f.name === b.dataset.dl), `${id}_${b.dataset.dl}`, b));
+    $("[data-ask]", d).onclick = () => copyText(`/datafetcher ${S.project}: discuss the warnings of run ${id}`, $("[data-askx]", d));
+  });
+}
+
+/* ---------- data ---------- */
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function catColours(series) {
+  const cats = series.categories || [];
+  const map = {};
+  if (series.ordinal) {
+    const nums = cats.filter(c => c !== "Not applicable").map(Number).sort((a, b) => a - b);
+    const ramp = ["--o1", "--o2", "--o3", "--o4", "--o5"];
+    nums.forEach((n, i) => map[String(n)] = ramp[Math.round(i * (ramp.length - 1) / Math.max(1, nums.length - 1))]);
+  } else {
+    cats.filter(c => c !== "Not applicable").slice(0, 7).forEach((c, i) => map[c] = "--c" + (i + 1));
+  }
+  map["Not applicable"] = "--na";
+  return c => map[c] || "--na";
+}
+
+function tabData(host) {
+  if (!S.runs.length) { host.innerHTML = `<div class="empty">No data yet.<br><span class="hint">After the first run, each indicator shows its coverage by country and year, the distribution of its values and a row preview.</span></div>`; return; }
+  const runId = S.run || S.runs[0].run_id;
+  host.innerHTML = `<div class="chips"><label class="hint" for="runsel">Run</label><select id="runsel" title="Which run's data to show">${S.runs.map(r => `<option value="${esc(r.run_id)}" ${r.run_id === runId ? "selected" : ""}>${esc(r.run_id)}${r.test_run ? " (test)" : ""}</option>`).join("")}</select>
+    <span class="hint" style="margin-left:auto">Coverage counts country × year cells that hold a value, among the countries and years the series reaches.</span></div><div id="dataview"><span class="hint">Loading…</span></div>`;
+  $("#runsel", host).onchange = e => { S.run = e.target.value; S.summary = null; tabData(host); };
+  loadSummary(runId).then(s => paintData($("#dataview", host), s), e => { $("#dataview", host).innerHTML = `<div class="empty">Summary not found (${esc(e.message)}).</div>`; });
+}
+
+function completeness(s) { let v = 0, all = 0; Object.values(s.coverage).forEach(str => { for (const ch of str) { all++; if (ch === "v") v++; } }); return all ? v / all : 0; }
+
+function paintData(el, sum) {
+  el.innerHTML = `${sum.test_run ? `<div class="note warn" style="margin-bottom:12px">Test run: the plan was not approved when these data were retrieved.</div>` : ""}
+    <div class="list"><div class="list-head cols-series"><span>Series</span><span>Kind</span><span>Countries</span><span>Years</span><span>Coverage</span></div>
+    ${sum.series.map(s => { const c = completeness(s); return `<div class="row cols-series" tabindex="0" data-key="ser:${esc(s.key)}">
+      <span title="${esc(s.key)}"><span class="mono">${esc(s.indicator_code)}</span>${s.dimensions ? ` <span class="hint">${esc(s.dimensions)}</span>` : ""} <span class="muted">${esc(s.indicator_name)}</span></span>
+      <span class="muted">${s.kind === "numeric" ? "numeric" : s.ordinal ? "ordinal" : "categorical"}</span><span class="mono">${s.countries}</span>
+      <span class="mono muted">${s.years.length ? `${s.years[0]}–${s.years.at(-1)} (${s.years.length})` : "—"}</span>
+      <span style="display:flex;gap:8px;align-items:center"><span class="meter" style="flex:1"><span style="width:${(c * 100).toFixed(1)}%"></span></span><span class="mono hint">${Math.round(c * 100)}%</span></span></div>`; }).join("")}</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px"><button class="btn" id="prevbtn" title="Loads dataset.csv in the page (about ${((sum.files.find(f => f.name === "dataset.csv") || {}).bytes / 1e6 || 0).toFixed(1)} MB) to browse rows with their source request">Preview rows</button>
+      <span class="hint">Every row links to the request that returned it.</span></div><div id="prev"></div>`;
+  toggleRows(el, (key, d) => {
+    const s = sum.series.find(x => "ser:" + x.key === key);
+    d.innerHTML = `<dl class="kv" style="margin-bottom:4px"><dt>Unit</dt><dd>${esc(s.unit || "—")}</dd><dt>Observations</dt><dd>${fmtN(s.observations)}${s.missing ? ` · ${fmtN(s.missing)} reported without a value` : ""}</dd><dt>Category</dt><dd>${esc(s.category || "—")}</dd></dl>
+      <div class="grid2"><div><h2 style="margin-bottom:6px">${s.kind === "numeric" ? "Median and interquartile range by year" : "Countries by value and year"}</h2><div class="chart" data-chart></div><div class="legend" data-legend style="margin-top:6px"></div></div>
+      <div class="covwrap"><h2>Coverage by country and year</h2><canvas class="cov" data-cov></canvas>
+      <div class="legend"><span><i style="background:var(--accent)"></i>value</span><span><i style="background:var(--miss)"></i>reported, no value</span><span><i style="background:var(--absent);border:1px solid var(--line-strong)"></i>not in the source</span></div></div></div>`;
+    drawChart(s, $("[data-chart]", d), $("[data-legend]", d));
+    drawCoverage(s, sum.countries, $("[data-cov]", d));
+  });
+  $("#prevbtn", el).onclick = () => preview($("#prev", el), sum);
+}
+
+function drawChart(s, host, legend) {
+  const years = Object.keys(s.distribution).sort();
+  const W = 520, H = 220, L = 40, R = 10, T = 10, B = 26, iw = W - L - R, ih = H - T - B;
+  const bw = iw / Math.max(1, years.length);
+  let marks = "", yTicks = "", scaleMax;
+  if (s.kind === "numeric") {
+    const vals = years.map(y => s.distribution[y]);
+    scaleMax = Math.max(...vals.map(v => v[3])) || 1; const nice = niceMax(scaleMax);
+    const Y = v => T + ih - (v / nice) * ih, X = i => L + bw * i + bw / 2;
+    const band = years.map((y, i) => `${X(i)},${Y(vals[i][1])}`).join(" ") + " " + years.map((y, i) => `${X(i)},${Y(vals[i][3])}`).reverse().join(" ");
+    marks += `<polygon points="${band}" fill="var(--accent)" fill-opacity=".16" stroke="none"/>`;
+    marks += `<polyline points="${years.map((y, i) => `${X(i)},${Y(vals[i][2])}`).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+    marks += years.map((y, i) => `<circle cx="${X(i)}" cy="${Y(vals[i][2])}" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/><rect x="${L + bw * i}" y="${T}" width="${bw}" height="${ih}" fill="transparent" data-tip="${esc(`<b>${y}</b><br>median ${vals[i][2]}<br>interquartile ${vals[i][1]}–${vals[i][3]}<br>range ${vals[i][0]}–${vals[i][4]}<br>${vals[i][5]} countries`)}"/>`).join("");
+    for (let k = 0; k <= 4; k++) { const v = nice * k / 4; yTicks += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${+v.toFixed(1)}</text>`; }
+    legend.innerHTML = `<span><i style="background:var(--accent)"></i>median</span><span><i style="background:var(--accent);opacity:.25"></i>25th–75th percentile</span><span class="hint">${esc(s.unit || "")}</span>`;
+  } else {
+    const col = catColours(s); const cats = s.categories;
+    scaleMax = Math.max(...years.map(y => Object.values(s.distribution[y]).reduce((a, b) => a + b, 0))); const nice = niceMax(scaleMax);
+    const Y = v => T + ih - (v / nice) * ih;
+    years.forEach((y, i) => { let acc = 0; const x = L + bw * i + bw * .15, w = bw * .7;
+      const tot = Object.values(s.distribution[y]).reduce((a, b) => a + b, 0);
+      cats.forEach(c => { const n = s.distribution[y][c] || 0; if (!n) return; const y0 = Y(acc + n), h = Y(acc) - Y(acc + n); acc += n;
+        marks += `<rect x="${x}" y="${y0 + 1}" width="${w}" height="${Math.max(0, h - 2)}" rx="2" fill="var(${col(c)})" data-tip="${esc(`<b>${y}</b> · ${esc(c)}<br>${n} of ${tot} countries`)}"/>`; }); });
+    for (let k = 0; k <= 4; k++) { const v = nice * k / 4; yTicks += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`; }
+    legend.innerHTML = cats.map(c => `<span><i style="background:var(${col(c)})"></i>${esc(s.ordinal && c !== "Not applicable" ? "level " + c : c)}</span>`).join("") + (cats.length > 8 ? `<span class="hint">Beyond 7 categories, colours repeat grey: see the preview.</span>` : "");
+  }
+  const xl = years.map((y, i) => (years.length <= 12 || i % Math.ceil(years.length / 12) === 0) ? `<text x="${L + bw * i + bw / 2}" y="${H - 8}" text-anchor="middle">${y}</text>` : "").join("");
+  host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(s.indicator_name)} by year">${yTicks}${marks}${xl}</svg>`;
+  host.querySelectorAll("[data-tip]").forEach(m => { m.onmousemove = e => showTip(e, m.dataset.tip); m.onmouseleave = hideTip; });
+}
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v || 1))); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p; return 10 * p; }
+
+function drawCoverage(s, names, cv) {
+  const codes = Object.keys(s.coverage).sort((a, b) => (names[a] || a).localeCompare(names[b] || b));
+  const ny = s.years.length, cw = 1, ch = 1;
+  cv.width = ny; cv.height = codes.length;
+  const full = codes.every(c => !/[^v]/.test(s.coverage[c]));
+  const gaps = codes.filter(c => /[^v]/.test(s.coverage[c]));
+  const note = document.createElement("div"); note.className = "hint";
+  note.textContent = full ? `Complete: all ${codes.length} countries have a value in each of the ${ny} years.` : `${gaps.length} of ${codes.length} countries have gaps. Hover a cell for its country and year.`;
+  cv.before(note);
+  if (full) { cv.hidden = true; cv.nextElementSibling && (cv.nextElementSibling.hidden = true); return; }
+  cv.style.height = Math.min(3 * codes.length, 600) + "px"; cv.style.width = Math.min(ny * 18, 520) + "px";
+  const ctx = cv.getContext("2d");
+  const c = {v: css("--accent"), m: css("--miss"), ".": css("--absent")};
+  codes.forEach((code, r) => { const str = s.coverage[code]; for (let i = 0; i < ny; i++) { ctx.fillStyle = c[str[i]] || c["."]; ctx.fillRect(i * cw, r * ch, cw, ch); } });
+  cv.onmousemove = e => { const b = cv.getBoundingClientRect(); const i = Math.floor((e.clientX - b.left) / b.width * ny), r = Math.floor((e.clientY - b.top) / b.height * codes.length);
+    if (i < 0 || r < 0 || i >= ny || r >= codes.length) return hideTip(); const code = codes[r], st = s.coverage[code][i];
+    showTip(e, `<b>${esc(names[code] || code)}</b> (${esc(code)})<br>${s.years[i]}: ${st === "v" ? "value" : st === "m" ? "reported, no value" : "not in the source"}`); };
+  cv.onmouseleave = hideTip;
+  cv.setAttribute("aria-label", `Coverage of ${s.indicator_code}: ${codes.length} countries by ${ny} years`);
+}
+
+/* ---------- row preview ---------- */
+function preview(host, sum) {
+  if (!window.Papa) { host.innerHTML = `<div class="hint">The CSV reader did not load. Download dataset.csv from the Runs tab instead.</div>`; return; }
+  host.innerHTML = `<span class="hint">Reading dataset.csv…</span>`;
+  Papa.parse(`data/${S.project}/runs/${sum.run_id}/dataset.csv`, {download: true, header: true, skipEmptyLines: true, complete: res => {
+    const rows = res.data; const inds = [...new Set(rows.map(r => r.indicator_code))].sort(); const years = [...new Set(rows.map(r => r.year))].sort();
+    host.innerHTML = `<div class="chips" style="margin:10px 0"><select id="pi" aria-label="Indicator"><option value="">All indicators</option>${inds.map(i => `<option>${esc(i)}</option>`).join("")}</select>
+      <select id="py" aria-label="Year"><option value="">All years</option>${years.map(i => `<option>${esc(i)}</option>`).join("")}</select>
+      <input type="search" id="pc" placeholder="Country name or code" aria-label="Country"><span class="hint" id="pn"></span></div><div class="scrollx" id="pt"></div>`;
+    const paint = () => {
+      const fi = $("#pi", host).value, fy = $("#py", host).value, fc = $("#pc", host).value.trim().toLowerCase();
+      const m = rows.filter(r => (!fi || r.indicator_code === fi) && (!fy || r.year === fy) && (!fc || (r.country_code + " " + r.country_name).toLowerCase().includes(fc)));
+      $("#pn", host).textContent = `${fmtN(m.length)} rows${m.length > 100 ? ", first 100 shown" : ""}`;
+      $("#pt", host).innerHTML = `<table class="prev"><thead><tr><th>Country</th><th>Year</th><th>Indicator</th><th>Dimensions</th><th>Value</th><th>Source request</th></tr></thead><tbody>
+        ${m.slice(0, 100).map(r => `<tr><td>${esc(r.country_name)} <span class="hint mono">${esc(r.country_code)}</span></td><td class="mono">${esc(r.year)}</td><td class="mono">${esc(r.indicator_code)}</td><td class="hint">${esc(r.dimension_labels)}</td>
+          <td>${r.missing === "True" ? `<span class="hint">no value</span>` : esc(r.value !== "" ? r.value : r.value_text)}${r.low ? ` <span class="hint">(${esc(r.low)}–${esc(r.high)})</span>` : ""}</td>
+          <td><a class="mono" href="${esc(r.source_url)}" target="_blank" rel="noopener" title="Opens the API request that returned this row">${esc(r.request_id)}</a></td></tr>`).join("")}</tbody></table>`;
+    };
+    ["#pi", "#py"].forEach(id => $(id, host).onchange = paint); $("#pc", host).oninput = paint; paint();
+  }, error: e => { host.innerHTML = `<div class="hint">Could not read dataset.csv (${esc(e.message || e)}).</div>`; }});
+}
+
+/* ---------- history ---------- */
+function tabHistory(host) {
+  const entries = [...(S.history || []).map((h, i) => ({...h, key: "h" + i})),
+    ...S.events.map(e => ({at: e.at, actor: "you", note: e.kind === "approved" ? `Approved version ${String(e.plan_sha256 || "").slice(0, 12)}${e.note ? ": " + e.note : ""}` : e.kind === "withdrawn" ? "Withdrew the approval" : e.kind, by: e.by_name, changes: [], key: "e" + e.id}))]
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  if (!entries.length) { host.innerHTML = `<div class="empty">No changes recorded yet.</div>`; return; }
+  host.innerHTML = `<div class="list"><div class="list-head cols-hist"><span>When</span><span>Who</span><span>What</span><span>Changes</span></div>
+    ${entries.map(h => `<div class="row cols-hist" tabindex="0" data-key="hist:${esc(h.key)}"><span class="muted">${fmtT(h.at)}</span><span>${esc(h.actor === "you" ? (h.by || "you") : h.actor)}</span>
+      <span class="wrap-ok">${esc(h.note || (h.changes.length ? "Plan updated" : "—"))}${h.status ? " " + pill(h.status) : ""}</span><span class="mono hint">${h.changes.length ? h.changes.length : ""}</span></div>`).join("")}</div>
+    <span class="hint">Claude's changes to the plan are logged when it exports the plan; runs are logged by the engine; approvals are logged here when you make them.</span>`;
+  toggleRows(host, (key, d) => {
+    const h = entries.find(x => "hist:" + x.key === key);
+    if (!h.changes.length) { d.innerHTML = `<span class="hint">${h.plan_sha256 ? "Plan version " + esc(h.plan_sha256.slice(0, 12)) : "No field-level changes."}</span>`; return; }
+    d.innerHTML = `<div class="sub">${h.changes.slice(0, 200).map(c => `<div class="item"><span class="mono">${esc(c.path || "(whole plan)")}</span> <span class="hint">${esc(c.change)}</span>
+      ${c.before != null ? `<div class="muted"><s>${esc(typeof c.before === "string" ? c.before : JSON.stringify(c.before))}</s></div>` : ""}${c.after != null ? `<div>${esc(typeof c.after === "string" ? c.after : JSON.stringify(c.after))}</div>` : ""}</div>`).join("")}</div>
+      ${h.changes.length > 200 ? `<span class="hint">${h.changes.length - 200} more changes not shown.</span>` : ""}`;
+  });
+}
+
+boot();
+</script>

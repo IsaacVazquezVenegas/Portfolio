@@ -101,6 +101,17 @@ Each run writes a new folder `projects/WHO_MPOWER/output/WHO_MPOWER_<timestamp>/
 
 The annotated template [`config/extraction_config.yaml`](config/extraction_config.yaml) shows every section (Eurostat + World Bank). The full option list is in [`docs/CONFIGURATION_REFERENCE.md`](docs/CONFIGURATION_REFERENCE.md); the formal schemas are in `schemas/`.
 
+## Data Fetcher page (running the protocol inside Claude)
+
+When the protocol runs in a Claude environment that can reach the APIs, Claude also runs the engine there and publishes the results to a private **Data Fetcher** page ([`page/index.html`](page/index.html)): register, plan, approval, runs, coverage and distributions per series, a row preview with the source request of every row, and downloads. See [`docs/DATA_FETCHER_PAGE.md`](docs/DATA_FETCHER_PAGE.md).
+
+```powershell
+python -m src.main page-export --plan projects/WHO_MPOWER/extraction_plan.json --run projects/WHO_MPOWER/output/<run> --site <page folder> --note "why the plan changed"
+python -m src.main apply-approval --plan projects/WHO_MPOWER/extraction_plan.json --approval approval.json
+```
+
+`page-export` writes the page's data files and logs every change to the plan; `apply-approval` copies an approval given on the page into the plan, after checking it approves this exact version.
+
 ## Credentials
 
 Never put keys in configurations or LLM chats. Name the variable in the configuration (`authentication.env_var: MY_API_KEY`) and define it in a local `.env` file (copy `.env.example`; `.env` is git-ignored) or in your shell. Secrets are redacted from logs and raw files.
